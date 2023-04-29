@@ -1,14 +1,14 @@
 #ifndef ENGINE_CAMERA
 #define ENGINE_CAMERA
 
-#include "matrix.hpp"
+#include "mat.hpp"
 #include "texture.hpp"
 
 struct Camera
 {
-    int fov;
-    int width;
-    int height;
+    float fov;
+    float width;
+    float height;
     float z_near;
     float z_far;
     vec3 position;
@@ -17,35 +17,40 @@ struct Camera
     FBO *fbo;
 
 
-    Camera(int _fov, int _width, int _height, float _z_near, float _z_far, vec3 _position, mat3 _orientation) :
+    Camera(float _fov, float _width, float _height, float _z_near, float _z_far, vec3 _position, mat3 _orientation) :
     fov(_fov), width(_width), height(_height), z_near(_z_near), z_far(_z_far), position(_position), orientation(_orientation) {}
 
     void set_view(vec3 view, vec3 look_up);
     mat4 get_view_matrix();
+    mat4 get_inverse_view_matrix();
     mat4 get_projection_matrix();
+    mat4 get_inverse_projection_matrix();
 };
 
 void Camera::set_view(vec3 view, vec3 look_up)
 {
     direction = view;
-
-    vec3 z_axis = normalize(-view);
-    vec3 y_axis = normalize(look_up - dot(look_up, z_axis) * z_axis);
-    vec3 x_axis = normalize(cross(y_axis, z_axis));
-
-    orientation.X = x_axis;
-    orientation.Y = y_axis;
-    orientation.Z = z_axis;
+    orientation = get_coordinate_matrix(-view, look_up);
 }
 
 mat4 Camera::get_view_matrix()
 {
-    return mat4(inv_mat(orientation), vec3()) * mat4(eye3(), vec3(-position)) ;
+    return get_inverse_rigid_body_motion_matrix(orientation, position);
 }
 
+mat4 Camera::get_inverse_view_matrix()
+{
+    return get_rigid_body_motion_matrix(orientation, position);
+}
+//z_far->1, z_near->-1
 mat4 Camera::get_projection_matrix()
 {
-    return mat4(eye3(), vec3());
+    return get_camera_projection_matrix(z_near, z_far, (width / 2), (height / 2));
+}
+
+mat4 Camera::get_inverse_projection_matrix()
+{
+    return get_inverse_camera_projection_matrix(z_near, z_far, (width / 2), (height / 2));
 }
 
 #endif

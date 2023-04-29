@@ -12,5 +12,5 @@ find_package(OpenCV REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
 
-ADD_EXECUTABLE(Engine main.cpp array.hpp camera.hpp character.hpp controller.hpp database.hpp global.hpp light.hpp material.hpp matrix.hpp mesh.hpp model.hpp motion.hpp quat.hpp renderer.hpp shader.hpp texture.hpp vec.hpp)
+ADD_EXECUTABLE(Engine main.cpp array.hpp camera.hpp character.hpp controller.hpp database.hpp global.hpp light.hpp material.hpp mat.hpp mesh.hpp model.hpp motion.hpp quat.hpp renderer.hpp shader.hpp texture.hpp vec.hpp)
 target_link_libraries(Engine ${OpenCV_LIBRARIES})

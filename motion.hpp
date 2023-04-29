@@ -5,11 +5,6 @@
 #include "quat.hpp"
 #include "spring.hpp"
 
-enum BONE
-{
-    ROOT = 0,
-};
-
 struct BVH_Motion
 {
     array1d<int> bone_ids;

@@ -8,7 +8,7 @@
 
 #define PI 3.14159265358979323846f
 
-static inline float deg_rad(const float& deg) { return deg * M_PI / 180.0; }
+static inline float deg_rad(const float& deg) { return deg * PI / 180.0; }
 
 static inline float clampf(float x, float min, float max)
 {

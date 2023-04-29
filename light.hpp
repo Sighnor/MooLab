@@ -20,6 +20,11 @@ struct Point_Light
 
     Mesh entity;
     FBO *shadow_map;
+
+    Point_Light(vec3 pos, vec3 dir, vec3 rad) : light_position(pos), light_direction(dir), light_radiance(rad)
+    {
+        entity = light_cube(get_coordinate_matrix(dir, vec3(0.f, 1.f, 0.f)), light_position);
+    }
 };
 
 struct Polygon_Light

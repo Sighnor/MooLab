@@ -14,7 +14,7 @@ struct mat3
 
 static inline void print(const mat3 &m)
 {
-    printf("%f, %f, %f\n", m.X.x, m.Y.x, m.Z.x);
+    printf("\n%f, %f, %f\n", m.X.x, m.Y.x, m.Z.x);
     printf("%f, %f, %f\n", m.X.y, m.Y.y, m.Z.y);
     printf("%f, %f, %f\n", m.X.z, m.Y.z, m.Z.z);
 }
@@ -70,7 +70,7 @@ static inline mat3 vec_to_cross_matrix(vec3 v)
 
 static inline mat3 Rodrigues(vec3 v, float theta)
 {
-    float phi = theta * PI / 180.0f;
+    float phi = deg_rad(theta);
     mat3 I = eye3();
     mat3 U = vec_to_cross_matrix(v);
 
@@ -111,6 +111,15 @@ static inline mat3 inv_mat(mat3 m, float eps = 1e-8f)
     return mat3(X, Y, Z) / det;
 }
 
+static inline mat3 get_coordinate_matrix(vec3 z, vec3 y)
+{
+    vec3 my_z = normalize(z);
+    vec3 my_y = normalize(y - dot(y, my_z) * my_z);
+    vec3 my_x = normalize(cross(my_y, my_z));
+
+    return mat3(my_x, my_y, my_z);
+}
+
 struct mat4
 {
     mat4() : X(), Y(), Z(), W() {}
@@ -120,6 +129,19 @@ struct mat4
 
     vec4 X, Y, Z, W;
 };
+
+static inline void print(const mat4 &m)
+{
+    printf("\n%f, %f, %f, %f\n", m.X.x, m.Y.x, m.Z.x, m.W.x);
+    printf("%f, %f, %f, %f\n", m.X.y, m.Y.y, m.Z.y, m.W.y);
+    printf("%f, %f, %f, %f\n", m.X.z, m.Y.z, m.Z.z, m.W.z);
+    printf("%f, %f, %f, %f\n", m.X.w, m.Y.w, m.Z.w, m.W.w);
+}
+
+static inline mat4 eye4()
+{
+    return mat4(vec4(1.0f, 0.0f, 0.0f, 0.0f), vec4(0.0f, 1.0f, 0.0f, 0.0f), vec4(0.0f, 0.0f, 1.0f, 0.0f), vec4(0.0f, 0.0f, 0.0f, 1.0f));
+}
 
 static inline vec4 operator * (mat4 m, vec4 v)
 {
@@ -132,7 +154,35 @@ static inline vec4 operator * (mat4 m, vec4 v)
 
 static inline mat4 operator * (mat4 m1, mat4 m2)
 {
-    return mat4(m1 * m2.X, m1 * m2.Y, m1 * m2.Z, m1 * m2.Z);
+    return mat4(m1 * m2.X, m1 * m2.Y, m1 * m2.Z, m1 * m2.W);
+}
+
+static inline mat4 get_rigid_body_motion_matrix(mat3 orientation, vec3 position)
+{
+    return mat4(eye3(), vec3(position)) * mat4(orientation, vec3());
+}
+
+static inline mat4 get_inverse_rigid_body_motion_matrix(mat3 orientation, vec3 position)
+{
+    return mat4(inv_mat(orientation), vec3()) * mat4(eye3(), vec3(-position));
+}
+
+static inline mat4 get_camera_projection_matrix(float near, float far, float r, float t)
+{
+    vec4 x = vec4(near / r, 0.f, 0.f, 0.f);
+    vec4 y = vec4(0.f, near / t, 0.f, 0.f);
+    vec4 z = vec4(0.f, 0.f, - (far + near) / (far - near), - 1.f);
+    vec4 w = vec4(0.f, 0.f, - 2 * near * far / (far - near), 0.f);
+    return mat4(x, y, z, w);
+}
+
+static inline mat4 get_inverse_camera_projection_matrix(float near, float far, float r, float t)
+{
+    vec4 x = vec4(r / near, 0.f, 0.f, 0.f);
+    vec4 y = vec4(0.f, t / near, 0.f, 0.f);
+    vec4 z = vec4(0.f, 0.f, 0.f, - (far - near) / (2 * near * far));
+    vec4 w = vec4(0.f, 0.f, - 1.f, (far + near) / (2 * near * far));
+    return mat4(x, y, z, w);
 }
 
 #endif
