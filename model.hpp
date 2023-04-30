@@ -13,6 +13,7 @@ struct Model
     int material_count;
 
     Mesh *meshes;
+    Shader *shaders;
     Material *materials;
     int *mesh_mateiral;
 };
@@ -26,6 +27,9 @@ Model mesh_material_to_model(const Mesh &mesh, const Material &mateiral)
     model.mesh_count = 1;
     model.meshes = (Mesh *)malloc(model.mesh_count * sizeof(Mesh));
     model.meshes[0] = mesh;
+
+    model.shaders = (Shader *)malloc(model.mesh_count * sizeof(Shader));
+    model.shaders[0].resize(model.meshes[0].triangle_count);
 
     model.material_count = 1;
     model.materials = (Material *)malloc(model.material_count * sizeof(Material));

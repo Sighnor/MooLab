@@ -43,8 +43,8 @@ struct Shader
     mat4 projection_matrix;
     mat4 screen_to_world_matrix;
 
-    vec3 *camera_pos;
-    vec3 *camera_dir;
+    vec3 camera_pos;
+    vec3 camera_dir;
 
     vec3 *light_pos;
     vec3 *light_dir;
@@ -63,23 +63,69 @@ struct Shader
     std::function<vec3(vertex_payload)> vertex_shader;
     std::function<vec3(fragment_payload)> fragment_shader;
 
+    void resize(int _triangle_count);
+    fragment_payload get_fragment_payload(
+        int ver_id, 
+        float alpha, 
+        float beta, 
+        float gamma,
+        float depth);
     vec3 pbr_shader(fragment_payload &frag);
 
-    Shader(int _triangle_count) : triangle_count(_triangle_count)
+    Shader() 
     {
-        ver = (vertex_payload *)malloc(triangle_count * sizeof(vertex_payload));
+        triangle_count = 0;
     }
 };
+
+void Shader::resize(int _triangle_count)
+{
+    triangle_count = _triangle_count;
+    ver = (vertex_payload *)malloc(triangle_count * sizeof(vertex_payload));
+
+    if (_triangle_count == 0 && triangle_count != 0)
+    {
+        free(ver);
+        ver = NULL;
+    }
+    else if (_triangle_count > 0 && triangle_count == 0)
+    {
+        ver = (vertex_payload *)malloc(triangle_count * sizeof(vertex_payload));
+        assert(ver != NULL);
+    }
+    else if (_triangle_count > 0 && triangle_count > 0 && _triangle_count != triangle_count)
+    {
+        ver = (vertex_payload *)(triangle_count * sizeof(vertex_payload));
+        assert(ver != NULL);           
+    }
+}
+
+fragment_payload Shader::get_fragment_payload(
+        int ver_id, 
+        float alpha, 
+        float beta, 
+        float gamma,
+        float depth)
+{
+    fragment_payload frag;
+
+    frag.fragment_pos = vec4_to_vec3(model_matrix * pos_to_vec4(alpha * ver[ver_id].vertex_pos[0] + beta * ver[ver_id].vertex_pos[1] + gamma * ver[ver_id].vertex_pos[2]));
+    frag.fragment_normal = vec4_to_vec3(model_matrix * vec_to_vec4(alpha * ver[ver_id].vertex_normal[0] + beta * ver[ver_id].vertex_normal[1] + gamma * ver[ver_id].vertex_normal[2]));
+    frag.fragment_texcoords = alpha * ver[ver_id].vertex_texcoords[0] + beta * ver[ver_id].vertex_texcoords[1] + gamma * ver[ver_id].vertex_texcoords[2];
+    frag.depth = depth;
+
+    return frag;
+}
 
 vec3 Shader::pbr_shader(fragment_payload &frag)
 {
     vec3 N = normalize(frag.fragment_normal);
-    vec3 V = normalize(*camera_pos - frag.fragment_pos);
+    vec3 V = normalize(camera_pos - frag.fragment_pos);
     float NdotV = std::max(dot(N, V), 0.f);
     
     vec3 F0 = vec3(0.5f); 
 
-    vec3 Lo = vec3(0.1f);
+    vec3 Lo = vec3(0.2f);
 
     vec3 L = normalize(*light_pos - frag.fragment_pos);
     vec3 H = normalize(V + L);
@@ -121,23 +167,12 @@ bool inside_3dtriangle(const vec3 &v0, const vec3 &v1, const vec3 &v2, const vec
     //v0, v1, v2逆时针
     mat3 tri_matrix = inv_mat(get_coordinate_matrix(cross(v1 - v0, v2 - v0), vec3(0.f, 1.f, 0.f)));
 
-    // print(tri_matrix * inv_mat(tri_matrix));
-    // print(tri_matrix);
-    // print(inv_mat(tri_matrix));
-
     vec2 p = vec3_to_vec2(tri_matrix * v);
     vec2 p0 = vec3_to_vec2(tri_matrix * v0);
     vec2 p1 = vec3_to_vec2(tri_matrix * v1);
     vec2 p2 = vec3_to_vec2(tri_matrix * v2);
 
     return inside_2dtriangle(p0, p1, p2, p, alpha, beta, gamma);
-}
-
-void update_fragment_payload(vertex_payload &ver, fragment_payload &frag, float alpha, float beta, float gamma)
-{
-    frag.fragment_pos = alpha * ver.vertex_pos[0] + beta * ver.vertex_pos[1] + gamma * ver.vertex_pos[2];
-    frag.fragment_normal = alpha * ver.vertex_normal[0] + beta * ver.vertex_normal[1] + gamma * ver.vertex_normal[2];
-    frag.fragment_texcoords = alpha * ver.vertex_texcoords[0] + beta * ver.vertex_texcoords[1] + gamma * ver.vertex_texcoords[2];
 }
 
 #endif
