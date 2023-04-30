@@ -5,7 +5,6 @@
 #include "material.hpp"
 #include "mat.hpp"
 #include "texture.hpp"
-#include "triangle.hpp"
 #include "vec.hpp"
 
 enum FBO_types
