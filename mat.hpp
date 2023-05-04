@@ -68,11 +68,12 @@ static inline mat3 vec_to_cross_matrix(vec3 v)
         vec3(0.0f, v.z, -v.y), vec3(-v.z, 0.0f, v.x), vec3(v.y, -v.x, 0.0f));
 }
 
-static inline mat3 Rodrigues(vec3 v, float theta)
+static inline mat3 Rodrigues(float theta, vec3 v)
 {
-    float phi = deg_rad(theta);
+    vec3 axis = normalize(v);
+    float phi = deg_to_rad(theta);
     mat3 I = eye3();
-    mat3 U = vec_to_cross_matrix(v);
+    mat3 U = vec_to_cross_matrix(axis);
 
     return (I + sin(phi) * U + (1.f - cos(phi)) * U * U);
 }
@@ -123,6 +124,7 @@ static inline mat3 get_coordinate_matrix(vec3 z, vec3 y)
 struct mat4
 {
     mat4() : X(), Y(), Z(), W() {}
+    mat4(float k) : X(k, 0.f, 0.f, 0.f), Y(0.f, k, 0.f, 0.f), Z(0.f, 0.f, k, 0.f), W(0.f, 0.f, 0.f, 1.f) {}
     mat4(vec3 _X, vec3 _Y, vec3 _Z, vec3 _W) : X(vec_to_vec4(_X)), Y(vec_to_vec4(_Y)), Z(vec_to_vec4(_Z)), W(pos_to_vec4(_W)) {}
     mat4(mat3 _Q, vec3 _W) : X(vec_to_vec4(_Q.X)), Y(vec_to_vec4(_Q.Y)), Z(vec_to_vec4(_Q.Z)), W(pos_to_vec4(_W)) {}
     mat4(vec4 _X, vec4 _Y, vec4 _Z, vec4 _W) : X(_X), Y(_Y), Z(_Z), W(_W) {}

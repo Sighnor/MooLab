@@ -34,6 +34,8 @@ struct fragment_payload
 
 struct Shader
 {
+    Material_Type shader_type;
+
     int triangle_count;
     vertex_payload *ver;
 
@@ -44,12 +46,15 @@ struct Shader
 
     vec3 camera_pos;
     vec3 camera_dir;
+    float z_near;
 
-    vec3 *light_pos;
-    vec3 *light_dir;
-    vec3 *light_radiance;
+    vec3 light_pos;
+    vec3 light_dir;
+    vec3 light_radiance;
 
     texture *albedo_map;
+    texture *BRDFLut;
+    texture *EavgLut;
     FBO *shadow_map;
     FBO *G_buffer;
 
@@ -108,8 +113,8 @@ fragment_payload Shader::get_fragment_payload(
 {
     fragment_payload frag;
 
-    frag.fragment_pos = vec4_to_vec3(model_matrix * pos_to_vec4(alpha * ver[ver_id].vertex_pos[0] + beta * ver[ver_id].vertex_pos[1] + gamma * ver[ver_id].vertex_pos[2]));
-    frag.fragment_normal = vec4_to_vec3(model_matrix * vec_to_vec4(alpha * ver[ver_id].vertex_normal[0] + beta * ver[ver_id].vertex_normal[1] + gamma * ver[ver_id].vertex_normal[2]));
+    frag.fragment_pos = vec4_to_vec3(normalize(model_matrix * pos_to_vec4(alpha * ver[ver_id].vertex_pos[0] + beta * ver[ver_id].vertex_pos[1] + gamma * ver[ver_id].vertex_pos[2])));
+    frag.fragment_normal = vec4_to_vec3(normalize(model_matrix * vec_to_vec4(alpha * ver[ver_id].vertex_normal[0] + beta * ver[ver_id].vertex_normal[1] + gamma * ver[ver_id].vertex_normal[2])));
     frag.fragment_texcoords = alpha * ver[ver_id].vertex_texcoords[0] + beta * ver[ver_id].vertex_texcoords[1] + gamma * ver[ver_id].vertex_texcoords[2];
     frag.depth = depth;
 
@@ -118,19 +123,21 @@ fragment_payload Shader::get_fragment_payload(
 
 vec3 Shader::pbr_shader(fragment_payload &frag)
 {
+    vec3 albedo = 0.5f; //powv((*albedo_map)(frag.fragment_texcoords), 2.2f);
+
     vec3 N = normalize(frag.fragment_normal);
     vec3 V = normalize(camera_pos - frag.fragment_pos);
     float NdotV = std::max(dot(N, V), 0.f);
     
     vec3 F0 = vec3(0.5f); 
+    F0 = mix(F0, albedo, metallic);
 
     vec3 Lo = vec3(0.2f);
 
-    vec3 L = normalize(*light_pos - frag.fragment_pos);
+    vec3 L = normalize(light_pos - frag.fragment_pos);
     vec3 H = normalize(V + L);
     float NdotL = std::max(dot(N, L), 0.f); 
-
-    vec3 radiance = *light_radiance;
+    vec3 radiance = light_radiance;
 
     float NDF = DistributionGGX(N, H, roughness);   
     float G   = GeometrySmith(N, V, L, roughness); 
@@ -138,11 +145,17 @@ vec3 Shader::pbr_shader(fragment_payload &frag)
         
     vec3 numerator    = NDF * G * F; 
     float denominator = std::max((4.0 * NdotL * NdotV), 0.001);
-    vec3 BRDF = numerator / denominator;
+    vec3 Fmicro = numerator / denominator;
 
-    // print(numerator);
+    vec3 Fms = MultiScatterBRDF(BRDFLut, EavgLut, roughness, frag.fragment_texcoords, NdotL, NdotV);
 
-    vec3 color = Lo + BRDF * radiance * NdotL;
+    vec3 BRDF = Fmicro + Fms;
+  
+    Lo = Lo + BRDF * radiance * NdotL;
+    vec3 color = Lo;
+  
+    color = color / (color + vec3(1.0));
+    color = powv(color, 1.0f / 2.2f); 
 
     return color;
 }

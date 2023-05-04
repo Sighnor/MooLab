@@ -46,34 +46,32 @@ void Database_save(Database &db, const char* file_name)
     fclose(f);
 }
 
-void forward_kinematics(
-    vec3& bone_position,
-    quat& bone_rotation,
-    const array1d<vec3> bone_positions,
-    const array1d<quat> bone_rotations,
-    const array1d<int> bone_parents,
-    const int bone_id)
+void batch_forward_kinematics(
+    Database &db,
+    int frame_num,
+    slice1d<vec3> bone_anim_positions,
+    slice1d<quat> bone_anim_rotations)
 {
-    if (bone_parents(bone_id) != -1)
+    for (int i = 0; i < db.bone_parents.size; i++)
     {
-        vec3 parent_position;
-        quat parent_rotation;
+        // Assumes bones are always sorted from root onwards
+        int parent_id = db.bone_parents(i);
+
+        assert(parent_id < i);
         
-        forward_kinematics(
-            parent_position,
-            parent_rotation,
-            bone_positions,
-            bone_rotations,
-            bone_parents,
-            bone_parents(bone_id));
-        
-        bone_position = (parent_rotation * bone_positions(bone_id)) + parent_position;
-        bone_rotation = (parent_rotation * bone_rotations(bone_id));
-    }
-    else
-    {
-        bone_position = bone_positions(bone_id);
-        bone_rotation = bone_rotations(bone_id); 
+        if (parent_id == -1)
+        {
+            bone_anim_positions(i) = db.bone_positions(frame_num, i);
+            bone_anim_rotations(i) = db.bone_rotations(frame_num, i);
+        }
+        else
+        {
+            bone_anim_rotations(i) = 
+                bone_anim_rotations(parent_id) * db.bone_rotations(frame_num, i);
+            bone_anim_positions(i) = 
+                bone_anim_positions(parent_id) + 
+                bone_anim_rotations(parent_id) * db.bone_positions(frame_num, i);
+        }
     }
 }
 

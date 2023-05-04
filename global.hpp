@@ -8,7 +8,8 @@
 
 #define PI 3.14159265358979323846f
 
-static inline float deg_rad(const float& deg) { return deg * PI / 180.0; }
+static inline float deg_to_rad(const float& deg) { return deg * PI / 180.f; }
+static inline float rad_to_deg(const float& rad) { return rad / PI * 180.f; }
 
 static inline float clampf(float x, float min, float max)
 {
@@ -21,6 +22,18 @@ static inline float clampf(float x, float min, float max)
         x = max;
     }
     return x;
+}
+
+static inline int float_to_int(float f)
+{
+    float a = floor(f);
+    float b = ceil(f);
+
+    if(f - a > 0.5f)
+    {
+        return b;
+    }
+    return a;
 }
 
 static inline float maxf_3(float x, float y, float z)

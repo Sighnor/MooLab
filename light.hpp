@@ -1,7 +1,8 @@
 #ifndef ENGINE_LIGHT
 #define ENGINE_LIGHT
 
-#include "mesh.hpp"
+#include "material.hpp"
+#include "model.hpp"
 #include "texture.hpp"
 
 struct Ray
@@ -18,14 +19,17 @@ struct Point_Light
     vec3 light_direction;
     vec3 light_radiance;
 
-    Mesh entity;
     FBO *shadow_map;
 
-    Point_Light(vec3 pos, vec3 dir, vec3 rad) : light_position(pos), light_direction(dir), light_radiance(rad)
-    {
-        entity = light_cube(get_coordinate_matrix(dir, vec3(0.f, 1.f, 0.f)), light_position);
-    }
+    Point_Light(vec3 pos, vec3 dir, vec3 rad) : light_position(pos), light_direction(dir), light_radiance(rad) {}
 };
+
+Model get_light_model(Point_Light &light)
+{
+    Model model = mesh_material_to_model(light_cube(get_coordinate_matrix(light.light_direction, vec3(0.f, 1.f, 0.f)), light.light_position), Material(Light));
+
+    return model;
+}
 
 struct Polygon_Light
 {

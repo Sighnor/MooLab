@@ -16,9 +16,9 @@ enum G_buffer
 
 struct Renderer
 {
-    std::vector<Model *> models;
-    std::vector<Point_Light *> point_lights;
-    std::vector<Polygon_Light *> polygon_lights;
+    std::vector<Model*> models;
+    std::vector<Point_Light*> point_lights;
+    std::vector<Polygon_Light*> polygon_lights;
 };
 
 struct updated_paramters
@@ -67,12 +67,15 @@ void bind_camera_parameters(Shader &shader, Model *model, Camera &camera)
 
     shader.camera_pos = camera.position;
     shader.camera_dir = camera.direction;
+    shader.z_near = camera.z_near;
     shader.G_buffer = camera.fbo;
 }
 
 void bind_material_parameters(Shader &shader, Material &material)
 {
-    shader.albedo_map = material.tex;
+    shader.albedo_map = &material.tex;
+    shader.BRDFLut = &material.BRDFLut;
+    shader.EavgLut = &material.EavgLut;
     shader.kd = material.kd;
     shader.ks = material.ks;
     shader.ka = material.ka;
@@ -83,15 +86,13 @@ void bind_material_parameters(Shader &shader, Material &material)
 void update_material_parameters(Shader &shader, updated_paramters *par)
 {
     shader.shadow_map = par->shadow_map;
-    shader.light_pos = par->light_pos;
-    shader.light_dir = par->light_dir;
-    shader.light_radiance = par->light_radiance;
+    shader.light_pos = *par->light_pos;
+    shader.light_dir = *par->light_dir;
+    shader.light_radiance = *par->light_radiance;
 }
 
-void rasterizer(Shader &shader, FBO *fbo)
+void rasterizer(Shader &shader, FBO *fbo, bool ifdraw)
 {
-    FBO depth_map(fbo->rows, fbo->cols, vec3(100.f));
-
     mat4 modelview_matrix = shader.view_matrix * shader.model_matrix;
     mat4 projection_matrix = shader.projection_matrix;
 
@@ -101,6 +102,11 @@ void rasterizer(Shader &shader, FBO *fbo)
         vec4 v0 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[0]);
         vec4 v1 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[1]);
         vec4 v2 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[2]);
+
+        if(- v0.z < shader.z_near && - v1.z < shader.z_near && - v2.z < shader.z_near)
+        {
+            continue;
+        }
 
         vec4 p0 = normalize(projection_matrix * v0);
         vec4 p1 = normalize(projection_matrix * v1);
@@ -125,22 +131,39 @@ void rasterizer(Shader &shader, FBO *fbo)
 
                 float depth = -(alpha * v0.z + beta * v1.z + gamma * v2.z);
 
-                if(flag == true && depth < depth_map(fbo_y, fbo_x).z)
+                if(flag == true && depth <= fbo->getdepth(fbo_y, fbo_x) && depth > shader.z_near)
                 {
-                    depth_map(fbo_y, fbo_x).z = depth;
-                    
-                    fragment_payload frag = shader.get_fragment_payload(i, alpha, beta, gamma, depth);
+                    fbo->getdepth(fbo_y, fbo_x) = depth;
 
-                    vec3 color;
-                    color = 255.f * shader.pbr_shader(frag);
-                    fbo->colors(fbo_y, fbo_x) = clampv(color);   
+                    if(ifdraw == true)
+                    {
+                        switch (shader.shader_type)
+                        {
+                            case Light:
+                            {
+                                fbo->getcolor(fbo_y, fbo_x) = clampv(255.f * shader.light_radiance);
+                                break;
+                            }
+                            case PBR:
+                            {   
+                                fragment_payload frag = shader.get_fragment_payload(i, alpha, beta, gamma, depth);
+
+                                vec3 color;
+                                color = 255.f * shader.pbr_shader(frag);
+                                fbo->getcolor(fbo_y, fbo_x) = clampv(color);
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-void draw(Model *model, Camera &camera, FBO *fbo, updated_paramters *par)
+void draw(Model *model, Camera &camera, FBO *fbo, updated_paramters *par, bool ifdraw)
 {
     for(int i = 0; i < model->mesh_count; i++)
     {
@@ -163,7 +186,8 @@ void draw(Model *model, Camera &camera, FBO *fbo, updated_paramters *par)
             par);
         rasterizer(
             model->shaders[i], 
-            fbo);
+            fbo,
+            ifdraw);
     }
 }
 

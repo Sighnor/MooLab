@@ -15,18 +15,32 @@ enum Bait
 
 struct Controller
 {
-    vec3 pos;
+    vec3 *pos;
     vec3 vel;
     vec3 acc;
 
-    vec3 dir;
+    vec3 *dir;
     vec3 ang_vel;
     vec3 ang_acc;
 
     Bait bait;
+
+    void pos_pid_control(
+            float p_const, 
+            float i_const, 
+            float d_const, 
+            float k, 
+            float dt, 
+            vec3 input);
 };
 
-void pos_pid_control(Controller &c, float p_const, float i_const, float d_const, float k, float dt, vec3 input)
+void Controller::pos_pid_control(
+                    float p_const, 
+                    float i_const, 
+                    float d_const, 
+                    float k, 
+                    float dt, 
+                    vec3 input)
 {
     static vec3 pos_ek_0 = vec3(0.f);
     static vec3 pos_ek_1 = vec3(0.f);
@@ -34,11 +48,11 @@ void pos_pid_control(Controller &c, float p_const, float i_const, float d_const,
 
     pos_ek_2 = pos_ek_1;
     pos_ek_1 = pos_ek_0;
-    pos_ek_0 = input - c.vel;
+    pos_ek_0 = input - *pos;
 
-    c.acc = (p_const * (pos_ek_0 - pos_ek_1) + i_const * pos_ek_0 - d_const * (pos_ek_0 - 2 * pos_ek_1 + pos_ek_2));
-    c.vel = c.vel + c.acc * dt;
-    c.pos = c.pos + c.vel * dt;
+    acc = k * ((p_const * (pos_ek_0 - pos_ek_1) + i_const * pos_ek_0 - d_const * (pos_ek_0 - 2 * pos_ek_1 + pos_ek_2)));
+    vel = vel + acc * dt;
+    *pos = *pos + vel * dt;
 }
 
 void dir_pid_control(Controller &c, float p_const, float i_const, float d_const, float k, float dt, vec3 input)
@@ -53,7 +67,13 @@ void dir_pid_control(Controller &c, float p_const, float i_const, float d_const,
 
     c.acc = (p_const * (dir_ek_0 - dir_ek_1) + i_const * dir_ek_0 - d_const * (dir_ek_0 - 2 * dir_ek_1 + dir_ek_2));
     c.vel = c.vel + c.acc * dt;
-    c.dir = c.dir + c.vel * dt;
+    *c.dir = *c.dir + c.vel * dt;
+}
+
+void bind_controller(Controller &c, vec3 *pos, vec3 *dir)
+{
+    c.pos = pos;
+    c.dir = dir;
 }
 
 

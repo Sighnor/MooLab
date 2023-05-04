@@ -5,6 +5,35 @@
 #include "quat.hpp"
 #include "spring.hpp"
 
+enum Motion_Bones
+{
+    RootJoint          = 0,
+    lHip          = 1,
+    lKnee     = 2,
+    lAnkle       = 3,
+    lToeJoint      = 4,
+    lToeJoint_end       = 5,
+    rHip    = 6,
+    rKnee      = 7,
+    rAnkle     = 8,
+    rToeJoint      = 9,
+    rToeJoint_end         = 10,
+    pelvis_lowerback        = 11,
+    lowerback_torso        = 12,
+    torso_head          = 13,
+    torso_head_end          = 14,
+    lTorso_Clavicle  = 15,
+    lShoulder       = 16,
+    lElbow   = 17,
+    lWrist      = 18,
+    lWrist_end = 19,
+    rTorso_Clavicle      = 20,
+    rShoulder  = 21,
+    rElbow     = 22,
+    rWrist     = 23,
+    rWrist_end       = 24,
+};
+
 struct BVH_Motion
 {
     array1d<int> bone_ids;
@@ -44,7 +73,7 @@ void Motion_load(BVH_Motion &motion, const char* file_name)
 
 void Motion_save(BVH_Motion &motion, const char* file_name)
 {
-    FILE* f = fopen(file_name, "rb");
+    FILE* f = fopen(file_name, "wb");
     assert(f != NULL);
 
     array1d_write(motion.bone_ids, f);
@@ -78,9 +107,9 @@ BVH_Motion motion_concatenate(const BVH_Motion &motion1, const BVH_Motion &motio
 void batch_forward_kinematics(
     const BVH_Motion &motion,
     int frame_num, 
-    array1d<vec3> bone_anim_positions, 
-    array1d<quat> bone_anim_rotations)
-{    
+    slice1d<vec3> bone_anim_positions, 
+    slice1d<quat> bone_anim_rotations)
+{
     bone_anim_positions.zero();
     bone_anim_rotations.zero();
     
@@ -88,15 +117,26 @@ void batch_forward_kinematics(
     {
         int parent_id = motion.bone_parents(i);
 
-        bone_anim_rotations(i) = 
-            bone_anim_rotations(parent_id) * motion.bone_rotations(frame_num, i);
-        bone_anim_positions(i) = 
-            bone_anim_positions(parent_id) + 
-            bone_anim_rotations(parent_id) * motion.bone_positions(frame_num, i);
+        if(parent_id == -1)
+        {
+            bone_anim_positions(i) = motion.bone_positions(frame_num, i);
+            bone_anim_rotations(i) = motion.bone_rotations(frame_num, i);
+        }
+        else
+        {
+            bone_anim_rotations(i) = 
+                bone_anim_rotations(parent_id) * motion.bone_rotations(frame_num, i);
+            bone_anim_positions(i) = 
+                bone_anim_positions(parent_id) + 
+                bone_anim_rotations(parent_id) * motion.bone_positions(frame_num, i);
+        }
     }
 }
 
-void decompose_rotation_with_yaxis(quat &Ry, quat &Rxz, const quat &rotation)
+void decompose_rotation_with_yaxis(
+    quat &Ry, 
+    quat &Rxz, 
+    const quat &rotation)
 {
     vec3 yxz = quat_to_euler_YXZ(rotation);
     Ry = euler_YXZ_to_quat(yxz.x, 0.f, 0.f);

@@ -163,6 +163,16 @@ static inline vec3 clampv(vec3 v, float min = 0.f, float max = 255.f)
     return v;
 }
 
+static inline vec3 powv(vec3 v, float f)
+{
+    return vec3(pow(v.x, f), pow(v.y, f), pow(v.z, f));
+}
+
+static inline vec3 mix(vec3 F0, vec3 albedo, float matallic)
+{
+    return F0;
+}
+
 struct vec4
 {
     vec4() : x(), y(), z(), w() {}

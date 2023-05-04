@@ -30,6 +30,7 @@ Model mesh_material_to_model(const Mesh &mesh, const Material &mateiral)
 
     model.shaders = (Shader *)malloc(model.mesh_count * sizeof(Shader));
     model.shaders[0].resize(model.meshes[0].triangle_count);
+    model.shaders[0].shader_type = mateiral.material_type;
 
     model.material_count = 1;
     model.materials = (Material *)malloc(model.material_count * sizeof(Material));
