@@ -33,7 +33,7 @@ void Database_load(Database &db, const char* file_name)
 
 void Database_save(Database &db, const char* file_name)
 {
-    FILE* f = fopen(file_name, "rb");
+    FILE* f = fopen(file_name, "wb");
     assert(f != NULL);
 
     array1d_write(db.bone_ids, f);
@@ -47,11 +47,14 @@ void Database_save(Database &db, const char* file_name)
 }
 
 void batch_forward_kinematics(
-    Database &db,
+    const Database &db,
     int frame_num,
     slice1d<vec3> bone_anim_positions,
     slice1d<quat> bone_anim_rotations)
 {
+    bone_anim_positions.zero();
+    bone_anim_rotations.zero();
+
     for (int i = 0; i < db.bone_parents.size; i++)
     {
         // Assumes bones are always sorted from root onwards

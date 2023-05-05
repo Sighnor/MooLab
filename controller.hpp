@@ -20,12 +20,21 @@ struct Controller
     vec3 acc;
 
     vec3 *dir;
-    vec3 ang_vel;
-    vec3 ang_acc;
+    vec2 ang;
+    vec2 ang_vel;
+    vec2 ang_acc;
 
     Bait bait;
 
     void pos_pid_control(
+            float p_const, 
+            float i_const, 
+            float d_const, 
+            float k, 
+            float dt, 
+            vec3 input);
+
+    void dir_pid_control(
             float p_const, 
             float i_const, 
             float d_const, 
@@ -55,25 +64,40 @@ void Controller::pos_pid_control(
     *pos = *pos + vel * dt;
 }
 
-void dir_pid_control(Controller &c, float p_const, float i_const, float d_const, float k, float dt, vec3 input)
+void Controller::dir_pid_control(
+                    float p_const, 
+                    float i_const, 
+                    float d_const, 
+                    float k, 
+                    float dt, 
+                    vec3 input)
 {
-    static vec3 dir_ek_0 = vec3(0.f);
-    static vec3 dir_ek_1 = vec3(0.f);
-    static vec3 dir_ek_2 = vec3(0.f);
+    static vec2 ang_ek_0 = vec2(0.f);
+    static vec2 ang_ek_1 = vec2(0.f);
+    static vec2 ang_ek_2 = vec2(0.f);
 
-    dir_ek_2 = dir_ek_1;
-    dir_ek_1 = dir_ek_0;
-    dir_ek_0 = input - c.vel;
+    vec2 target_ang = dir_to_angle(input);
 
-    c.acc = (p_const * (dir_ek_0 - dir_ek_1) + i_const * dir_ek_0 - d_const * (dir_ek_0 - 2 * dir_ek_1 + dir_ek_2));
-    c.vel = c.vel + c.acc * dt;
-    *c.dir = *c.dir + c.vel * dt;
+    ang_ek_2 = ang_ek_1;
+    ang_ek_1 = ang_ek_0;
+    ang_ek_0 = target_ang - ang;
+
+    ang_ek_0.x = circulate_float(ang_ek_0.x, - PI, PI);
+
+    ang_acc = k * (p_const * (ang_ek_0 - ang_ek_1) + i_const * ang_ek_0 - d_const * (ang_ek_0 - 2 * ang_ek_1 + ang_ek_2));
+    ang_vel = ang_vel + ang_acc * dt;
+    ang = ang + ang_vel * dt;
+
+    ang.x = circulate_float(ang.x, - PI, PI);
+
+    *dir = angle_to_dir(ang);
 }
 
 void bind_controller(Controller &c, vec3 *pos, vec3 *dir)
 {
     c.pos = pos;
     c.dir = dir;
+    c.ang = dir_to_angle(*dir);
 }
 
 

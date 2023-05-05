@@ -86,7 +86,7 @@ void linear_blend_positions(
                 int id = bone_weights_ids(i, j);
 
                 vec3 position = bone_anim_rotations(id) * (inv_quat(bone_rest_rotations(id)) * (all_rest_positions(i) - bone_rest_positions(id)))
-                + bone_anim_positions(id);
+                                + bone_anim_positions(id);
 
                 all_anim_positions(i) = all_anim_positions(i) + bone_weights(i, j) * position;
             }

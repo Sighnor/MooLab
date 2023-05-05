@@ -21,7 +21,8 @@ struct Camera
     fov(_fov), width(_width), height(_height), z_near(_z_near), z_far(_z_far), position(_position), orientation(_orientation) {}
 
     void set_pos(vec3 pos);
-    void set_view(vec3 view, vec3 look_up);
+    void set_view(vec3 view);
+    void update_orientation(vec3 look_up);
     mat4 get_view_matrix();
     mat4 get_inverse_view_matrix();
     mat4 get_projection_matrix();
@@ -33,10 +34,14 @@ void Camera::set_pos(vec3 pos)
     position = pos;
 }
 
-void Camera::set_view(vec3 view, vec3 look_up)
+void Camera::set_view(vec3 view)
 {
     direction = view;
-    orientation = get_coordinate_matrix(-view, look_up);
+}
+
+void Camera::update_orientation(vec3 look_up)
+{
+    orientation = get_coordinate_matrix(-direction, look_up);
 }
 
 mat4 Camera::get_view_matrix()

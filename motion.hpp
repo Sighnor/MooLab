@@ -44,6 +44,17 @@ struct BVH_Motion
     int nframes() const { return bone_positions.rows; }
     int nbones() const { return bone_positions.cols; }
 
+    // BVH_Motion& operator = (const BVH_Motion& motion) 
+    // {
+    //     bone_ids = motion.bone_ids;
+    //     bone_positions = motion.bone_positions;
+    //     bone_rotations = motion.bone_rotations;
+    //     bone_parents = motion.bone_parents;
+
+    //     return *this;
+    // } 
+
+    BVH_Motion() {}
     BVH_Motion(int nframes, int nbones)
     {
         bone_ids.resize(nbones);
@@ -86,8 +97,10 @@ void Motion_save(BVH_Motion &motion, const char* file_name)
 
 BVH_Motion motion_sub_sequence(const BVH_Motion &motion, int begin, int end)
 {
-    BVH_Motion res = motion;
+    BVH_Motion res;
 
+    res.bone_ids = motion.bone_ids;
+    res.bone_parents = motion.bone_parents;
     res.bone_positions = array2d__sub_sequence(motion.bone_positions, begin, end);
     res.bone_rotations = array2d__sub_sequence(motion.bone_rotations, begin, end);
 
@@ -96,8 +109,10 @@ BVH_Motion motion_sub_sequence(const BVH_Motion &motion, int begin, int end)
 
 BVH_Motion motion_concatenate(const BVH_Motion &motion1, const BVH_Motion &motion2)
 {
-    BVH_Motion res = motion1;
+    BVH_Motion res;
 
+    res.bone_ids = motion1.bone_ids;
+    res.bone_parents = motion1.bone_parents;
     res.bone_positions = array2d__concatenate(motion1.bone_positions, motion2.bone_positions);
     res.bone_rotations = array2d__concatenate(motion1.bone_rotations, motion2.bone_rotations);
 
@@ -115,6 +130,7 @@ void batch_forward_kinematics(
     
     for(int i = 0; i < motion.nbones(); i++)
     {
+        // Assumes bones are always sorted from root onwards
         int parent_id = motion.bone_parents(i);
 
         if(parent_id == -1)
@@ -138,18 +154,26 @@ void decompose_rotation_with_yaxis(
     quat &Rxz, 
     const quat &rotation)
 {
-    vec3 yxz = quat_to_euler_YXZ(rotation);
-    Ry = euler_YXZ_to_quat(yxz.x, 0.f, 0.f);
-    Rxz = euler_YXZ_to_quat(0.f, yxz.y, yxz.z);
+    // vec3 yxz = quat_to_euler_YXZ(rotation);
+    // Ry = euler_YXZ_to_quat(yxz.x, 0.f, 0.f);
+    // Rxz = euler_YXZ_to_quat(0.f, yxz.y, yxz.z);
+    vec2 xz_y = dir_to_angle(rotation * vec3(0.f, 0.f, 1.f));
+    Ry = euler_YXZ_to_quat(rad_to_deg(xz_y.x), 0.f, 0.f);
+    Rxz = euler_YXZ_to_quat(0.f, rad_to_deg(xz_y.y - PI / 2.f), 0.f);
 }
 
 BVH_Motion translation_and_rotation(
-    BVH_Motion motion, 
-    int frame_num, vec3 
-    target_translation_xz, 
+    const BVH_Motion &motion, 
+    int frame_num, 
+    vec3 target_translation_xz, 
     vec3 target_facing_direction_xz)
 {
-    BVH_Motion res = motion;
+    BVH_Motion res;
+
+    res.bone_ids = motion.bone_ids;
+    res.bone_parents = motion.bone_parents;
+    res.bone_positions = motion.bone_positions;
+    res.bone_rotations = motion.bone_rotations;
   
     vec3 offset = target_translation_xz - motion.bone_positions(frame_num, 0);
 
@@ -162,9 +186,13 @@ BVH_Motion translation_and_rotation(
     decompose_rotation_with_yaxis(Ry, Rxz, res.bone_rotations(frame_num, 0));
     quat invRyxz = inv_quat(Ry * Rxz);
 
-    if(target_facing_direction_xz.x == 0.f)
+    if(target_facing_direction_xz.x == 0.f && target_facing_direction_xz.z > 0.f)
     {
         Ry = rot_vec_to_quat(vec3(0.f, 1.f, 0.f) * 0.f);
+    }
+    else if(target_facing_direction_xz.x == 0.f && target_facing_direction_xz.z < 0.f)
+    {
+        Ry = rot_vec_to_quat(vec3(0.f, 1.f, 0.f) * PI);
     }
     else
     {
@@ -188,8 +216,8 @@ BVH_Motion translation_and_rotation(
 }
 
 BVH_Motion blend_two_motions(
-    BVH_Motion motion1, 
-    BVH_Motion motion2, 
+    const BVH_Motion &motion1, 
+    const BVH_Motion &motion2, 
     array1d<float> alpha)
 {
     BVH_Motion res(alpha.size, motion1.nbones());
@@ -213,11 +241,16 @@ BVH_Motion blend_two_motions(
 }
 
 BVH_Motion build_loop_motion(
-    BVH_Motion motion, 
+    const BVH_Motion &motion, 
     float half_life, 
     float fps)
 {
-    BVH_Motion res = motion;
+    BVH_Motion res;
+
+    res.bone_ids = motion.bone_ids;
+    res.bone_parents = motion.bone_parents;
+    res.bone_positions = motion.bone_positions;
+    res.bone_rotations = motion.bone_rotations;
     
     for(int ib = 0; ib < res.nbones(); ib++)
     {
@@ -258,12 +291,17 @@ BVH_Motion build_loop_motion(
 }
 
 BVH_Motion concatenate_two_motions(
-    BVH_Motion motion1, 
-    BVH_Motion motion2,
+    const BVH_Motion &motion1, 
+    const BVH_Motion &motion2,
     int mix_frame,
     int mix_time)
 {
-    BVH_Motion res1 = motion1;
+    BVH_Motion res1;
+
+    res1.bone_ids = motion1.bone_ids;
+    res1.bone_parents = motion1.bone_parents;
+    res1.bone_positions = motion1.bone_positions;
+    res1.bone_rotations = motion1.bone_rotations;
     
     vec3 pos = res1.bone_positions(mix_frame, 0);
     quat rot = res1.bone_rotations(mix_frame, 0);

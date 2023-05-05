@@ -173,6 +173,20 @@ static inline vec3 mix(vec3 F0, vec3 albedo, float matallic)
     return F0;
 }
 
+static inline vec2 dir_to_angle(vec3 v)
+{
+    vec3 dir = normalize(v);
+    float phi = acos(dir.y);
+    float theta = atan2(dir.x, dir.z);
+
+    return vec2(theta, phi);
+}
+
+static inline vec3 angle_to_dir(vec2 angle)
+{
+    return vec3(sin(angle.x) * sin(angle.y), cos(angle.y), cos(angle.x) * sin(angle.y));
+}
+
 struct vec4
 {
     vec4() : x(), y(), z(), w() {}
