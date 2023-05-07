@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 	int t = 0;
 
 	array1d<vec3> bone_anim_positions(motion.nbones());
-    array1d<quat> bone_anim_rotations(motion.nbones());
+        array1d<quat> bone_anim_rotations(motion.nbones());
 
 	while (key != 27)
 	{
