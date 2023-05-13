@@ -70,13 +70,8 @@ int main(int argc, char** argv)
     int key = 0;
     int t = 0;
 
-<<<<<<< HEAD
-	array1d<vec3> bone_anim_positions(motion.nbones());
-        array1d<quat> bone_anim_rotations(motion.nbones());
-=======
     array1d<vec3> character_bone_anim_positions(motion.nbones());
     array1d<quat> character_bone_anim_rotations(motion.nbones());
->>>>>>> 030d30a (v1.4)
 
     array1d<vec3> robot_bone_anim_positions(robot.nbones());
     array1d<quat> robot_bone_anim_rotations(robot.nbones());
@@ -98,11 +93,11 @@ int main(int argc, char** argv)
         // camera.position.y = sin(deg_to_rad(2 * t + 45));
         // camera.position.z = 2.f + 0.5f * sin(deg_to_rad(t));
 
-        // batch_forward_kinematics(motion, t, character_bone_anim_positions, character_bone_anim_rotations);
+        batch_forward_kinematics(motion, t, character_bone_anim_positions, character_bone_anim_rotations);
 
-        // deform_character_anim_mesh(character, character_bone_anim_positions, character_bone_anim_rotations, mesh1);
+        deform_character_anim_mesh(character, character_bone_anim_positions, character_bone_anim_rotations, mesh1);
 
-        robot_forward_kinematics(robot, robot_bone_anim_positions, robot_bone_anim_rotations, 12.f * cos(deg_to_rad(4.4 * t)), 12.f * cos(deg_to_rad(1.f * t)), 0.f);
+        robot_forward_kinematics(robot, robot_bone_anim_positions, robot_bone_anim_rotations, 24.f * cos(deg_to_rad(4.4 * t)), 24.f * cos(deg_to_rad(1.f * t)), 0.f);
 
         deform_robot_anim_mesh(robot, robot_bone_anim_positions, robot_bone_anim_rotations, mesh2);
 
@@ -114,7 +109,7 @@ int main(int argc, char** argv)
         // renderer.models[2]->transform = mat4(Rodrigues(2 * t, vec3(0.f, -1.f, 0.f)), vec3());
         // renderer.models[2]->transform = mat4(eye3(), vec3(0.f, 0.f, 0.f));
 
-        camera.set_pos(vec3(5.f, 2.f, 0.f));
+        camera.set_pos(vec3(8.f, 2.f, 0.5f));
         camera.set_view(vec3(-1.f, 0.f, 0.f));
         camera.update_orientation(vec3(0.f, 1.f, 0.f));
 
@@ -129,24 +124,25 @@ int main(int argc, char** argv)
         // camera.update_orientation(vec3(0.f, 1.f, 0.f));
         // camera.set_view(R * vec3(0.f, 0.f, -1.f), vec3(0.f, 1.f, 0.f));
 
-        // draw(renderer.models[0], camera, &output0, &par, true);
-        // draw(renderer.models[1], camera, &output0, &par, true);
-
+        draw(renderer.models[0], camera, &output0, &par, true);
+        draw(renderer.models[1], camera, &output0, &par, true);
         draw(renderer.models[2], camera, &output0, &par, true);
 
-        // camera.set_pos(vec3(5.f, 2.f, -0.5f));
-        // camera.set_view(vec3(-1.f, 0.f, 0.f));
-        // camera.update_orientation(vec3(0.f, 1.f, 0.f));
+        camera.set_pos(vec3(8.f, 2.f, -0.5f));
+        camera.set_view(vec3(-1.f, 0.f, 0.f));
+        camera.update_orientation(vec3(0.f, 1.f, 0.f));
 
-        robot_forward_kinematics(robot,
-                                robot_bone_anim_positions,
-                                robot_bone_anim_rotations,
-                                12.f * cos(deg_to_rad(4.4 * t)) * (1.f + 0.15f * sin(deg_to_rad(t))),
-                                12.f * cos(deg_to_rad(1.f * t)) * (1.f + 0.15f * sin(deg_to_rad(t))),
-                                0.f);
+        // robot_forward_kinematics(robot,
+        //                         robot_bone_anim_positions,
+        //                         robot_bone_anim_rotations,
+        //                         12.f * cos(deg_to_rad(4.4 * t)) * (1.f + 0.15f * sin(deg_to_rad(t))),
+        //                         12.f * cos(deg_to_rad(1.f * t)) * (1.f + 0.15f * sin(deg_to_rad(t))),
+        //                         0.f);
 
-        deform_robot_anim_mesh(robot, robot_bone_anim_positions, robot_bone_anim_rotations, mesh2);
+        // deform_robot_anim_mesh(robot, robot_bone_anim_positions, robot_bone_anim_rotations, mesh2);
 
+        draw(renderer.models[0], camera, &output1, &par, true);
+        draw(renderer.models[1], camera, &output1, &par, true);
         draw(renderer.models[2], camera, &output1, &par, true);
 
         cv::imshow("left", fbo_to_img(&output0));
