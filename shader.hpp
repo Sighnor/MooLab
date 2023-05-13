@@ -113,8 +113,8 @@ fragment_payload Shader::get_fragment_payload(
 {
     fragment_payload frag;
 
-    frag.fragment_pos = vec4_to_vec3(normalize(model_matrix * pos_to_vec4(alpha * ver[ver_id].vertex_pos[0] + beta * ver[ver_id].vertex_pos[1] + gamma * ver[ver_id].vertex_pos[2])));
-    frag.fragment_normal = vec4_to_vec3(normalize(model_matrix * vec_to_vec4(alpha * ver[ver_id].vertex_normal[0] + beta * ver[ver_id].vertex_normal[1] + gamma * ver[ver_id].vertex_normal[2])));
+    frag.fragment_pos = vec4_to_vec3(standardize(model_matrix * pos_to_vec4(alpha * ver[ver_id].vertex_pos[0] + beta * ver[ver_id].vertex_pos[1] + gamma * ver[ver_id].vertex_pos[2])));
+    frag.fragment_normal = vec4_to_vec3(standardize(model_matrix * vec_to_vec4(alpha * ver[ver_id].vertex_normal[0] + beta * ver[ver_id].vertex_normal[1] + gamma * ver[ver_id].vertex_normal[2])));
     frag.fragment_texcoords = alpha * ver[ver_id].vertex_texcoords[0] + beta * ver[ver_id].vertex_texcoords[1] + gamma * ver[ver_id].vertex_texcoords[2];
     frag.depth = depth;
 
@@ -166,7 +166,7 @@ bool inside_2dtriangle(const vec2 &p0, const vec2 &p1, const vec2 &p2, const vec
     beta = ((p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y + p2.x * p0.y - p0.x * p2.y) / ((p2.y - p0.y) * p1.x + (p0.x - p2.x) * p1.y + p2.x * p0.y - p0.x * p2.y);
     gamma = ((p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y + p0.x * p1.y - p1.x * p0.y) / ((p0.y - p1.y) * p2.x + (p1.x - p0.x) * p2.y + p0.x * p1.y - p1.x * p0.y);
 
-    if(alpha > 0.f && alpha < 1.f && beta > 0.f && beta < 1.f && gamma > 0.f && gamma < 1.f)
+    if(alpha >= 0.f && alpha <= 1.f && beta >= 0.f && beta <= 1.f && gamma >= 0.f && gamma <= 1.f)
     {
         return true;
     }

@@ -1,10 +1,13 @@
 #ifndef ENGINE_GLOBAL
 #define ENGINE_GLOBAL
 
+#include <algorithm>
 #include <iostream>
 #include <functional>
 #include <math.h>
+#include <map>
 #include <random>
+#include <vector>
 
 #define PI 3.14159265358979323846f
 
@@ -86,6 +89,24 @@ static inline float minf_3(float x, float y, float z)
             return z;
         }
     }
+}
+
+bool compare_map_int_float(const std::pair<int, float> x, const std::pair<int, float> y)
+{
+    return x.second < y.second;
+}
+
+static inline float circulate_int(int f, int min, int max)
+{
+    if(f < min)
+    {
+        return f + (max - min);
+    }
+    else if(f > max)
+    {
+        return f - (max - min);
+    }
+    return f;
 }
 
 static inline float circulate_float(float f, float min, float max)

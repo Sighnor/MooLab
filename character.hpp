@@ -112,9 +112,9 @@ void linear_blend_normals(
             {
                 int id = bone_weights_ids(i, j);
 
-                vec3 position = bone_anim_rotations(id) * (inv_quat(bone_rest_rotations(id)) * all_rest_normals(i));
+                vec3 normal = bone_anim_rotations(id) * (inv_quat(bone_rest_rotations(id)) * all_rest_normals(i));
 
-                all_anim_normals(i) = all_anim_normals(i) + bone_weights(i, j) * position;
+                all_anim_normals(i) = all_anim_normals(i) + bone_weights(i, j) * normal;
             }
         }
     }
@@ -141,8 +141,8 @@ Mesh make_character_rest_mesh(const Character &character)
 
 void deform_character_anim_mesh(
     const Character &character, 
-    const array1d<vec3> bone_anim_positions,
-    const array1d<quat> bone_anim_rotations,
+    const slice1d<vec3> bone_anim_positions,
+    const slice1d<quat> bone_anim_rotations,
     Mesh &mesh)
 {
     linear_blend_positions(

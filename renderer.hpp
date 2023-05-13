@@ -108,9 +108,9 @@ void rasterizer(Shader &shader, FBO *fbo, bool ifdraw)
             continue;
         }
 
-        vec4 p0 = normalize(projection_matrix * v0);
-        vec4 p1 = normalize(projection_matrix * v1);
-        vec4 p2 = normalize(projection_matrix * v2);
+        vec4 p0 = standardize(projection_matrix * v0);
+        vec4 p1 = standardize(projection_matrix * v1);
+        vec4 p2 = standardize(projection_matrix * v2);
 
         float max_x = clampf(0.5f * fbo->cols * (1.f + maxf_3(p0.x, p1.x, p2.x)), 0, fbo->cols - 1);
         float min_x = clampf(0.5f * fbo->cols * (1.f + minf_3(p0.x, p1.x, p2.x)), 0, fbo->cols - 1);
@@ -121,10 +121,10 @@ void rasterizer(Shader &shader, FBO *fbo, bool ifdraw)
         {
             for(int y = min_y; y < max_y; y++)
             {
-                int fbo_y = fbo->rows - 1 - y;
-                int fbo_x = x;
+                int fbo_y = fbo->rows - 1 - (y + 0.5f);
+                int fbo_x = x + 0.5f;
 
-                vec2 p = vec2(x * 2.f / fbo->cols - 1.f, y * 2.f / fbo->rows - 1.f);
+                vec2 p = vec2((x + 0.5f) * 2.f / fbo->cols - 1.f, (y + 0.5f) * 2.f / fbo->rows - 1.f);
 
                 float alpha, beta, gamma;
                 bool flag = inside_2dtriangle(vec4_to_vec2(p0), vec4_to_vec2(p1), vec4_to_vec2(p2), p, alpha, beta, gamma);
@@ -151,6 +151,7 @@ void rasterizer(Shader &shader, FBO *fbo, bool ifdraw)
                                 vec3 color;
                                 color = 255.f * shader.pbr_shader(frag);
                                 fbo->getcolor(fbo_y, fbo_x) = clampv(color);
+                                // fbo->getcolor(fbo_y, fbo_x) = clampv(255.f * 0.5f);
                                 break;
                             }
                             default:

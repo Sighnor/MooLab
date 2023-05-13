@@ -252,9 +252,29 @@ static inline vec4 operator - (vec4 v)
     return vec4(-v.x, -v.y, -v.z, -v.w);
 }
 
+static inline float dot(vec4 v1, vec4 v2)
+{
+    return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w;
+}
+
+static inline float length(vec4 v)
+{
+    return sqrtf(dot(v, v));
+}
+
 static inline vec4 normalize(vec4 v, float eps = 1e-8f)
 {
+    return v / (length(v) + eps);
+}
+
+static inline vec4 standardize(vec4 v, float eps = 1e-8f)
+{
     return v / (v.w + eps);
+}
+
+static inline vec4 to_one(vec4 v, float eps = 1e-8f)
+{
+    return v / (v.x + v.y + v.z + v.w + eps);
 }
 
 #endif

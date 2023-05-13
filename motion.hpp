@@ -135,8 +135,8 @@ void batch_forward_kinematics(
 
         if(parent_id == -1)
         {
-            bone_anim_positions(i) = motion.bone_positions(frame_num, i);
             bone_anim_rotations(i) = motion.bone_rotations(frame_num, i);
+            bone_anim_positions(i) = motion.bone_positions(frame_num, i);
         }
         else
         {
