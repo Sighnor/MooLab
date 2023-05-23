@@ -3,6 +3,7 @@
 #include "controller.hpp"
 #include "database.hpp"
 #include "motion.hpp"
+#include "nnet.hpp"
 #include "renderer.hpp"
 #include "robot.hpp"
 
@@ -30,7 +31,7 @@ int main(int argc, char** argv)
     material0.BRDFLut = img_to_tex("../resources/BRDFLut.png");
     material0.EavgLut = img_to_tex("../resources/EavgLut.png");
     Material material1(PBR);
-    material1.roughness = 0.5f;
+    material1.roughness = 0.8f;
     material1.BRDFLut = img_to_tex("../resources/BRDFLut.png");
     material1.EavgLut = img_to_tex("../resources/EavgLut.png");
     //model存储mesh的拷贝，但由于mesh本身存储的是地址，实际上仍为mesh地址上的数据
@@ -67,6 +68,18 @@ int main(int argc, char** argv)
     FBO output0(540, 540);
     FBO output1(540, 540);
 
+    //神经网络
+    nnet compressor, decompressor;
+    nnet_evaluation compressor_evaluation, decompressor_evaluation;
+    nnet_load(compressor, "../resources/compressor.bin");
+    nnet_load(decompressor, "../resources/decompressor.bin");
+    compressor_evaluation.resize(compressor);
+    decompressor_evaluation.resize(decompressor);
+
+    // std::cout << compressor_evaluation.layers[0].size << ", " << compressor_evaluation.layers[compressor.weights.size()].size << std::endl;
+    // std::cout << decompressor_evaluation.layers[0].size << ", " << decompressor_evaluation.layers[decompressor.weights.size()].size << std::endl;
+    // std::cout << compressor_evaluation.layers.size() << ", " << decompressor_evaluation.layers.size() << std::endl;
+
     int key = 0;
     int t = 0;
 
@@ -75,6 +88,9 @@ int main(int argc, char** argv)
 
     array1d<vec3> robot_bone_anim_positions(robot.nbones());
     array1d<quat> robot_bone_anim_rotations(robot.nbones());
+
+    array1d<float> rotations(3);
+    array1d<float> positions(8);
 
     while (key != 27)
     {
@@ -97,21 +113,47 @@ int main(int argc, char** argv)
 
         deform_character_anim_mesh(character, character_bone_anim_positions, character_bone_anim_rotations, mesh1);
 
-        robot_forward_kinematics(robot, robot_bone_anim_positions, robot_bone_anim_rotations, 24.f * cos(deg_to_rad(4.4 * t)), 24.f * cos(deg_to_rad(1.f * t)), 0.f);
+        // light.light_position = character_bone_anim_positions(0) + vec3(0.5 * sin(deg_to_rad(t)), 1.f + 0.5 * sin(deg_to_rad(2 * t)), 1.f * sin(deg_to_rad(3 * t)));
+        // light.light_direction = vec3(0.f, 1.2f, 0.f) - light.light_position;
+        light.light_position = vec3(5.f, 5.f, 0.f);
+        renderer.models[0]->transform = mat4(eye3(), renderer.point_lights[0]->light_position) * 
+                                        mat4(0.01f);
+        renderer.models[1]->transform = mat4(2.f);
+        // robot_set(
+        //     positions, 
+        //     std::vector<float>{-0.128821, 0.322403, -0.0468577, -0.09206, 0.1832901, 0.1411806, 0.0109454}, 
+        //     2.99235);
+
+        // robot_set(
+        //     positions, 
+        //     std::vector<float>{-0.228821, 0.322403, 0.168577, 0.09206, 0.1832901, 0.1411806, -0.109454}, 
+        //     2.99235);
+
+        // compressor_evaluate(
+        //     rotations,
+        //     positions,
+        //     t,
+        //     false,
+        //     compressor_evaluation,
+        //     compressor);
+
+        robot_forward_kinematics(robot, robot_bone_anim_positions, robot_bone_anim_rotations, positions);
 
         deform_robot_anim_mesh(robot, robot_bone_anim_positions, robot_bone_anim_rotations, mesh2);
 
-        light.light_position = character_bone_anim_positions(0) + vec3(0.5 * sin(deg_to_rad(t)), 1.f + 0.5 * sin(deg_to_rad(2 * t)), 1.f * sin(deg_to_rad(3 * t)));
-        light.light_direction = vec3(0.f, 1.2f, 0.f) - light.light_position;
-        renderer.models[0]->transform = mat4(eye3(), renderer.point_lights[0]->light_position) * 
-                                        mat4(0.01f);
+        // renderer.models[2]->transform = mat4(mat3(vec3(0.4f, 0.f, 0.f), vec3(0.f, 1.f, 0.f), vec3(0.f, 0.f, 0.4f)), vec3(0.f, 0.f, 0.f));
 
         // renderer.models[2]->transform = mat4(Rodrigues(2 * t, vec3(0.f, -1.f, 0.f)), vec3());
         // renderer.models[2]->transform = mat4(eye3(), vec3(0.f, 0.f, 0.f));
 
-        camera.set_pos(vec3(8.f, 2.f, 0.5f));
+        camera.set_pos(vec3(6.f, 2.f, 0.5f));
+        // camera.set_pos(vec3(6.f, 2.f, 0.f));
         camera.set_view(vec3(-1.f, 0.f, 0.f));
         camera.update_orientation(vec3(0.f, 1.f, 0.f));
+
+        // camera.set_pos(vec3(2.5f, 2.f, 0.8f));
+        // camera.set_view(vec3(-1.f, 0.f, 0.f));
+        // camera.update_orientation(vec3(0.f, 1.f, 0.f));
 
         // controller.pos_pid_control(1.f, 0.01f, 0.1f, 200.f, 1.f / 60.f, character_bone_anim_positions(0) + character_bone_anim_rotations(0) * vec3(0.f, 1.2f, -2.f));
         // controller.dir_pid_control(0.7, 0.01f, 0.5f, 200.f, 1.f / 60.f, character_bone_anim_rotations(0) * vec3(0.f, 0.f, 1.f));
@@ -128,9 +170,40 @@ int main(int argc, char** argv)
         draw(renderer.models[1], camera, &output0, &par, true);
         draw(renderer.models[2], camera, &output0, &par, true);
 
-        camera.set_pos(vec3(8.f, 2.f, -0.5f));
+        robot_set(positions, std::vector<float>(7, deg_to_rad(12.f * cos(deg_to_rad(2.2 * t)))), 2.99235);
+
+        // decompressor_evaluate(
+        //     positions,
+        //     rotations,
+        //     decompressor_evaluation,
+        //     decompressor);
+
+        // // compressor_evaluate(
+        // //     rotations,
+        // //     positions,
+        // //     t,
+        // //     true,
+        // //     compressor_evaluation,
+        // //     compressor);
+
+        // robot_evaluate(
+        //     rotations,
+        //     positions,
+        //     t,
+        //     false);
+
+        robot_forward_kinematics(robot, robot_bone_anim_positions, robot_bone_anim_rotations, positions);
+
+        deform_robot_anim_mesh(robot, robot_bone_anim_positions, robot_bone_anim_rotations, mesh2);
+
+        camera.set_pos(vec3(6.f, 2.f, -0.5f));
+        // camera.set_pos(vec3(6.f, 2.f, 0.f));
         camera.set_view(vec3(-1.f, 0.f, 0.f));
         camera.update_orientation(vec3(0.f, 1.f, 0.f));
+
+        // camera.set_pos(vec3(2.5f, 2.f, -0.2f));
+        // camera.set_view(vec3(-1.f, 0.f, 0.f));
+        // camera.update_orientation(vec3(0.f, 1.f, 0.f));
 
         // robot_forward_kinematics(robot,
         //                         robot_bone_anim_positions,
@@ -150,12 +223,13 @@ int main(int argc, char** argv)
 
         // char left_name[50];
         // char right_name[50];
-        // sprintf(left_name, "../resources/zleft%d.png", t);
-        // sprintf(right_name, "../resources/zright%d.png", t);
+        // sprintf(left_name, "../../Shape_Feature_Extraction/resources/img/zleft%d.png", t);
+        // sprintf(right_name, "../../Shape_Feature_Extraction/resources/img/zright%d.png", t);
         // cv::imwrite(left_name, fbo_to_img(&output0));
         // cv::imwrite(right_name, fbo_to_img(&output1));
-        t++;
+
         std::cout << t << std::endl;
+        t++;
         // print(character_bone_anim_positions(0));
         key = cv::waitKey(1);
     }

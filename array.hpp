@@ -15,7 +15,7 @@ struct slice1d
     slice1d(int _size, T* _data) : size(_size), data(_data) {}
     
     void zero() { memset((char*)data, 0, sizeof(T) * size); }
-    void set(const T& x) { for (int i = 0; i < size; i++) { data[i] = x; } }
+    void set(const T& x) { for(int i = 0; i < size; i++) { data[i] = x; } }
     
     inline T& operator()(int i) const { assert(i >= 0 && i < size); return data[i]; }
 };
@@ -29,7 +29,7 @@ struct slice2d
     slice2d(int _rows, int _cols, T* _data) : rows(_rows), cols(_cols), data(_data) {}
 
     void zero() { memset((char*)data, 0, sizeof(T) * rows * cols); }
-    void set(const T& x) { for (int i = 0; i < rows * cols; i++) { data[i] = x; } }
+    void set(const T& x) { for(int i = 0; i < rows * cols; i++) { data[i] = x; } }
     
     inline slice1d<T> operator()(int i) const { assert(i >= 0 && i < rows); return slice1d<T>(cols, &data[i * cols]); }
     inline T& operator()(int i, int j) const { assert(i >= 0 && i < rows && j >= 0 && j < cols); return data[i * cols + j]; }
@@ -54,7 +54,7 @@ struct array1d
     operator slice1d<T>() const { return slice1d<T>(size, data); }
     
     void zero() { memset(data, 0, sizeof(T) * size); }
-    void set(const T& x) { for (int i = 0; i < size; i++) { data[i] = x; } }
+    void set(const T& x) { for(int i = 0; i < size; i++) { data[i] = x; } }
     
     void resize(int _size)
     {
@@ -115,7 +115,7 @@ struct array2d
     operator slice2d<T>() const { return slice2d<T>(rows, cols, data); }
 
     void zero() { memset(data, 0, sizeof(T) * rows * cols); }
-    void set(const T& x) { for (int i = 0; i < rows * cols; i++) { data[i] = x; } }
+    void set(const T& x) { for(int i = 0; i < rows * cols; i++) { data[i] = x; } }
 
     void resize(int _rows, int _cols)
     {

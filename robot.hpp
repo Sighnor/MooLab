@@ -84,17 +84,70 @@ void robot_save(Robot& robot, const char* filename)
     fclose(f);
 }
 
+void robot_evaluate(
+    slice1d<float> rotations,
+    slice1d<float> positions,
+    float t,
+    bool ifcontroll)
+{
+    if(!ifcontroll)
+    {
+        rotations(0) = 12.f * cos(deg_to_rad(2.2 * t)); 
+        rotations(1) = circulate_float(0.1f * t, -180.f, 180.f);
+        rotations(2) = 0.f;
+    }
+    else
+    {
+        rotations(0) = 12.f * rotations(0);
+        rotations(1) = 180.f * rotations(1);
+        rotations(2) = 0.f;
+    }
+
+    for(int i = 0; i < positions.size; i++)
+    {
+        positions(i) = deg_to_rad(rotations(0));
+    }
+    positions(7) = deg_to_rad(rotations(1));
+}
+
+void robot_set(
+    slice1d<float> positions,
+    std::vector<float> shape,
+    float direction)
+{
+    assert(shape.size() == 7);
+    for(int i = 0; i < 7; i++)
+    {
+        positions(i) = shape[i];
+    }
+    positions(7) = direction;
+}
+
+void transform_positions(slice1d<float> trans_positions, slice1d<float> positions)
+{
+    assert(positions.size == 8);
+    trans_positions(0) = rad_to_deg(positions(7));
+    trans_positions(1) = 0.f;
+    for(int i = 0; i < 7; i++)
+    {
+        trans_positions(i + 2) = rad_to_deg(positions(i));
+    }
+    trans_positions(9) = 0.f;
+}
+
 void robot_forward_kinematics(
     const Robot &robot,
     slice1d<vec3> bone_anim_positions, 
     slice1d<quat> bone_anim_rotations,
-    float a,
-    float b,
-    float c)
+    slice1d<float> positions)
 {
     bone_anim_positions.zero();
     bone_anim_rotations.zero();
-    
+
+    array1d<float> trans_positions(10);
+
+    transform_positions(trans_positions, positions);
+
     for(int i = 0; i < robot.nbones(); i++)
     {
         // Assumes bones are always sorted from root onwards
@@ -102,13 +155,13 @@ void robot_forward_kinematics(
 
         if(parent_id == -1)
         {
-            bone_anim_rotations(i) = quat(1.f, 0.f, 0.f, 0.f);
+            bone_anim_rotations(i) = quat(trans_positions(i), vec3(0.f, 1.f, 0.f));
             bone_anim_positions(i) = robot.bone_offset_positions(i);
         }
         else
         {
             bone_anim_rotations(i) = 
-                bone_anim_rotations(parent_id) * quat(a, vec3(1.f, 0.f, 0.f)) * quat(b, vec3(0.f, 1.f, 0.f));
+                bone_anim_rotations(parent_id) * quat(trans_positions(i), vec3(1.f, 0.f, 0.f));
             bone_anim_positions(i) = 
                 bone_anim_positions(parent_id) + 
                 bone_anim_rotations(parent_id) * robot.bone_offset_positions(i);

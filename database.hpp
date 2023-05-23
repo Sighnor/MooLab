@@ -55,7 +55,7 @@ void batch_forward_kinematics(
     bone_anim_positions.zero();
     bone_anim_rotations.zero();
 
-    for (int i = 0; i < db.bone_parents.size; i++)
+    for(int i = 0; i < db.bone_parents.size; i++)
     {
         // Assumes bones are always sorted from root onwards
         int parent_id = db.bone_parents(i);

@@ -37,6 +37,11 @@ static inline vec2 operator * (vec2 v, float s)
     return vec2(v.x * s, v.y * s);
 }
 
+static inline vec2 operator * (vec2 v1, vec2 v2)
+{
+    return vec2(v1.x * v2.x, v1.y * v2.y);
+}
+
 static inline vec2 operator / (vec2 v, float s)
 {
     return vec2(v.x / s, v.y / s);

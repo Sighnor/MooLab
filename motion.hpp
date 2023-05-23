@@ -157,9 +157,9 @@ void decompose_rotation_with_yaxis(
     // vec3 yxz = quat_to_euler_YXZ(rotation);
     // Ry = euler_YXZ_to_quat(yxz.x, 0.f, 0.f);
     // Rxz = euler_YXZ_to_quat(0.f, yxz.y, yxz.z);
-    vec2 xz_y = dir_to_angle(rotation * vec3(0.f, 0.f, 1.f));
-    Ry = euler_YXZ_to_quat(rad_to_deg(xz_y.x), 0.f, 0.f);
-    Rxz = euler_YXZ_to_quat(0.f, rad_to_deg(xz_y.y - PI / 2.f), 0.f);
+    vec2 y_xz = dir_to_angle(rotation * vec3(0.f, 0.f, 1.f));
+    Ry = euler_YXZ_to_quat(rad_to_deg(y_xz.x), 0.f, 0.f);
+    Rxz = euler_YXZ_to_quat(0.f, rad_to_deg(y_xz.y - PI / 2.f), 0.f);
 }
 
 BVH_Motion translation_and_rotation(
