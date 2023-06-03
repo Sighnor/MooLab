@@ -5,7 +5,7 @@
 #include "light.hpp"
 #include "model.hpp"
 #include "mesh.hpp"
-
+//Gbuffer编号
 enum G_buffer
 {
     color_buffer       = 0,
