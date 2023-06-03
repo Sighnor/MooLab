@@ -163,4 +163,13 @@ void deform_character_anim_mesh(
         character.bone_weights);
 }
 
+void IK_two_bones(
+    vec3 bone0_anim_positions, 
+    vec3 bone1_anim_positions, 
+    quat bone0_anim_rotations, 
+    quat bone1_anim_rotations)
+{
+
+}
+
 #endif

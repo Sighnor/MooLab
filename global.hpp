@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iostream>
 #include <functional>
+#include <fstream>
 #include <math.h>
 #include <map>
 #include <random>

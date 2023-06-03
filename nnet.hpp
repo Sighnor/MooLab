@@ -154,56 +154,81 @@ void nnet_evaluate(
         nn.output_std);
 }
 
-void compressor_evaluate(
-    slice1d<float> rotations,
-    slice1d<float> positions,
-    float t,
-    bool ifcontroll,
+void nnet_evaluate(
+    slice1d<float> input,
+    slice1d<float> output,
     nnet_evaluation& evaluation,
     const nnet& nn)
 {
-    if(!ifcontroll)
-    {
-        rotations(0) = cos(deg_to_rad(2.2 * t)); 
-        rotations(1) = circulate_float(0.1 * t, -180.f, 180.f) / 180.f;
-        rotations(2) = 0.f;
-    }
-
     slice1d<float> input_layer = evaluation.layers.front();
     slice1d<float> output_layer = evaluation.layers.back();
 
-    for(int i = 0; i < rotations.size; i++)
+    assert(input.size == input_layer.size && output.size == output_layer.size);
+
+    for(int i = 0; i < input.size; i++)
     {
-        input_layer(i) = rotations(i);
+        input_layer(i) = input(i);
     }
     
     nnet_evaluate(evaluation, nn);
     
-    for(int i = 0; i < positions.size; i++)
+    for(int i = 0; i < output.size; i++)
     {
-        positions(i) = output_layer(i);
+        output(i) = output_layer(i);
     }
 }
 
-void decompressor_evaluate(
-    slice1d<float> positions,
-    slice1d<float> rotations,
+void nnet_evaluate(
+    slice1d<float> input,
+    slice1d<quat> output,
     nnet_evaluation& evaluation,
     const nnet& nn)
 {
     slice1d<float> input_layer = evaluation.layers.front();
     slice1d<float> output_layer = evaluation.layers.back();
-  
-    for(int i = 0; i < positions.size; i++)
+
+    assert(input.size == input_layer.size && (4 * output.size) == output_layer.size);
+
+    for(int i = 0; i < input.size; i++)
     {
-        input_layer(i) = positions(i);
+        input_layer(i) = input(i);
     }
     
     nnet_evaluate(evaluation, nn);
     
-    for(int i = 0; i < rotations.size; i++)
+    for(int i = 0; i < output.size; i++)
     {
-        rotations(i) = output_layer(i);
+        output(i).w = output_layer(4 * i);
+        output(i).x = output_layer(4 * i + 1);
+        output(i).y = output_layer(4 * i + 2);
+        output(i).z = output_layer(4 * i + 3);
+    }
+}
+
+void nnet_evaluate(
+    slice1d<quat> input,
+    slice1d<float> output,
+    nnet_evaluation& evaluation,
+    const nnet& nn)
+{
+    slice1d<float> input_layer = evaluation.layers.front();
+    slice1d<float> output_layer = evaluation.layers.back();
+
+    assert((4 * input.size) == input_layer.size && output.size == output_layer.size);
+
+    for(int i = 0; i < input.size; i++)
+    {
+        input_layer(4 * i) = input(i).w;
+        input_layer(4 * i + 1) = input(i).x;
+        input_layer(4 * i + 2) = input(i).y;
+        input_layer(4 * i + 3) = input(i).z;
+    }
+    
+    nnet_evaluate(evaluation, nn);
+    
+    for(int i = 0; i < output.size; i++)
+    {
+        output(i) = output_layer(i);
     }
 }
 

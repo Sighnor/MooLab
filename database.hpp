@@ -46,7 +46,7 @@ void Database_save(Database &db, const char* file_name)
     fclose(f);
 }
 
-void batch_forward_kinematics(
+void batch_forward_kinematics_full(
     const Database &db,
     int frame_num,
     slice1d<vec3> bone_anim_positions,

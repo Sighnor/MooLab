@@ -119,7 +119,7 @@ BVH_Motion motion_concatenate(const BVH_Motion &motion1, const BVH_Motion &motio
     return res;
 }
 
-void batch_forward_kinematics(
+void batch_forward_kinematics_full(
     const BVH_Motion &motion,
     int frame_num, 
     slice1d<vec3> bone_anim_positions, 
@@ -137,6 +137,38 @@ void batch_forward_kinematics(
         {
             bone_anim_rotations(i) = motion.bone_rotations(frame_num, i);
             bone_anim_positions(i) = motion.bone_positions(frame_num, i);
+        }
+        else
+        {
+            bone_anim_rotations(i) = 
+                bone_anim_rotations(parent_id) * motion.bone_rotations(frame_num, i);
+            bone_anim_positions(i) = 
+                bone_anim_positions(parent_id) + 
+                bone_anim_rotations(parent_id) * motion.bone_positions(frame_num, i);
+        }
+    }
+}
+
+void batch_forward_kinematics_part(
+    const BVH_Motion &motion,
+    int frame_num, 
+    slice1d<vec3> bone_anim_positions, 
+    slice1d<quat> bone_anim_rotations,
+    vec3 root_anim_positions,
+    quat root_anim_rotations)
+{
+    bone_anim_positions.zero();
+    bone_anim_rotations.zero();
+    
+    for(int i = 0; i < motion.nbones(); i++)
+    {
+        // Assumes bones are always sorted from root onwards
+        int parent_id = motion.bone_parents(i);
+
+        if(parent_id == -1)
+        {
+            bone_anim_rotations(i) = root_anim_rotations;
+            bone_anim_positions(i) = root_anim_positions;
         }
         else
         {
@@ -221,12 +253,16 @@ BVH_Motion blend_two_motions(
     array1d<float> alpha)
 {
     BVH_Motion res(alpha.size, motion1.nbones());
+    res.bone_ids = motion1.bone_ids;
+    res.bone_parents = motion1.bone_parents;
+    res.bone_positions = motion1.bone_positions;
+    res.bone_rotations = motion1.bone_rotations;
 
     for(int i = 0; i < alpha.size; i++)
     {
-        float t = float(i) / alpha.size;
-        int j = int(t * motion1.nframes());
-        int k = int(t * motion2.nframes());
+        float t = float(i) / (alpha.size - 1);
+        int j = t * (motion1.nframes() - 1);
+        int k = t * (motion2.nframes() - 1);
 
         for(int id = 0; id < res.nbones(); id++)
         {
@@ -254,11 +290,11 @@ BVH_Motion build_loop_motion(
     
     for(int ib = 0; ib < res.nbones(); ib++)
     {
-        quat avel_begin = 1 / 60.f * res.bone_rotations(0, ib);
-        quat avel_end = 1 / 60.f * res.bone_rotations(res.nframes() - 1, ib);
+        quat avel_begin = res.bone_rotations(0, ib);
+        quat avel_end = res.bone_rotations(res.nframes() - 1, ib);
     
-        vec3 rot_diff = quat_to_avel(avel_end * inv_quat(avel_begin));
-        vec3 avel_diff = quat_to_avel(avel_end) - quat_to_avel(avel_begin);
+        vec3 rot_diff = quat_to_avel(avel_begin, avel_end);
+        vec3 avel_diff = quat_to_avel(quat(1.0f, 0.0f, 0.f, 0.f), avel_end) - quat_to_avel(quat(1.0f, 0.0f, 0.f, 0.f), avel_begin);
 
         vec3 vel1 = res.bone_positions(res.nframes() - 1, ib) - res.bone_positions(res.nframes() - 2, ib);
         vec3 vel2 = res.bone_positions(1, ib) - res.bone_positions(0, ib);
@@ -306,7 +342,14 @@ BVH_Motion concatenate_two_motions(
     vec3 pos = res1.bone_positions(mix_frame, 0);
     quat rot = res1.bone_rotations(mix_frame, 0);
     vec3 facing_axis = rot * vec3(0, 0, 1);
+    
     BVH_Motion res2 = translation_and_rotation(motion2, 0, pos, facing_axis);
+    // BVH_Motion res2;
+
+    // res2.bone_ids = motion2.bone_ids;
+    // res2.bone_parents = motion2.bone_parents;
+    // res2.bone_positions = motion2.bone_positions;
+    // res2.bone_rotations = motion2.bone_rotations;
 
     BVH_Motion mix_motion0 = motion_sub_sequence(res1, 0, mix_frame);
     BVH_Motion mix_motion1 = motion_sub_sequence(res1, mix_frame, mix_frame + mix_time);
@@ -316,7 +359,7 @@ BVH_Motion concatenate_two_motions(
     array1d<float> alpha(mix_time);
     for(int t = 0; t < mix_time; t++)
     {
-        alpha(t) = t / float(mix_time);
+        alpha(t) = float(t) / mix_time;
     }
     BVH_Motion mix_motion = blend_two_motions(mix_motion1, mix_motion2, alpha);
 

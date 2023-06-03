@@ -5,7 +5,7 @@
 #include "light.hpp"
 #include "model.hpp"
 #include "mesh.hpp"
-//Gbuffer编号
+
 enum G_buffer
 {
     color_buffer       = 0,
@@ -152,6 +152,7 @@ void rasterizer(Shader &shader, FBO *fbo, bool ifdraw)
                                 color = 255.f * shader.pbr_shader(frag);
                                 fbo->getcolor(fbo_y, fbo_x) = clampv(color);
                                 // fbo->getcolor(fbo_y, fbo_x) = clampv(255.f * 0.5f);
+                                // fbo->getcolor(fbo_y, fbo_x) = 255.f * fbo->getdepth(fbo_y, fbo_x);
                                 break;
                             }
                             default:
@@ -189,6 +190,30 @@ void draw(Model *model, Camera &camera, FBO *fbo, updated_paramters *par, bool i
             model->shaders[i], 
             fbo,
             ifdraw);
+    }
+}
+
+void draw_point(vec3 point, Camera &camera, FBO *fbo, vec3 color)
+{
+    mat4 view_matrix = camera.get_view_matrix();
+    mat4 projection_matrix = camera.get_projection_matrix();
+    vec4 p = standardize(projection_matrix * view_matrix * pos_to_vec4(point));
+
+    int x = 0.5f * fbo->cols * (1.f + p.x);
+    int y = 0.5f * fbo->rows * (1.f + p.y);
+
+    int fbo_x = x;
+    int fbo_y = fbo->rows - 1 - y;
+
+    if(fbo_y >= 0 && fbo_y <= fbo->rows - 1 && fbo_x >= 0 && fbo_x <= fbo->cols - 1)
+    {
+        for(int i = std::max(fbo_x - 2, 0); i < std::min(fbo_x + 3, fbo->cols - 1); i++)
+        {
+            for(int j = std::max(fbo_y - 2, 0); j < std::min(fbo_y + 3, fbo->rows - 1); j++)
+            {
+                fbo->getcolor(j, i) = clampv(color);
+            }
+        }
     }
 }
 

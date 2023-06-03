@@ -7,9 +7,9 @@ struct quat
 {
     quat() : w(1.f), x(0.f), y(0.f), z(0.f) {}
     quat(float _w, float _x, float _y, float _z) : w(_w), x(_x), y(_y), z(_z) {}
-    quat(float theta, vec3 v) 
+    quat(float theta, vec3 axis) 
     {
-        vec3 axis = normalize(v);
+        axis = normalize(axis);
         float phi = deg_to_rad(theta);
         float cos_phi_2 = cos(phi / 2.f);
         float sin_phi_2 = sin(phi / 2.f);
@@ -31,6 +31,11 @@ static inline void print(const quat &q)
 static inline quat operator + (quat q1, quat q2)
 {
     return quat(q1.w + q2.w, q1.x + q2.x, q1.y + q2.y, q1.z + q2.z);
+}
+
+static inline quat operator - (quat q)
+{
+    return quat(-q.w, -q.x, -q.y, -q.z);
 }
 
 static inline quat operator * (quat q, float s)
@@ -138,13 +143,14 @@ static inline quat euler_YXZ_to_quat(float y, float x, float z)
 // v1 = q1 * v
 // v2 = q2 * v
 // phi = arccos(v1 * v2)
-// phi1 = alpha * phi
-// phi2 = (1 - alpha) * phi
-// v1 = cos(phi1) * v3 + sin(phi1) * v4
-// v2 = cos(phi2) * v3 - sin(phi2) * v4
-// v3 = sin(phi2) / sin(phi1 + phi2) * v1 + sin(phi1) / sin(phi1 + phi2) * v2
-//    = sin(phi2) / sin(phi) * v1 + sin(phi1) / sin(phi) * v2
-// q3 * v = (sin(phi2) / sin(phi) * q1 + sin(phi1) / sin(phi) * q2) * v
+// phi1 = (1 - alpha) * phi
+// phi2 = alpha * phi
+// v1 = cos(phi2) * v3 + sin(phi2) * v4
+// v2 = cos(phi1) * v3 - sin(phi1) * v4
+// v3 = sin(phi1) / sin(phi1 + phi2) * v1 + sin(phi2) / sin(phi1 + phi2) * v2
+//    = sin(phi1) / sin(phi) * v1 + sin(phi2) / sin(phi) * v2
+// q3 * v = (sin(phi1) / sin(phi) * q1 + sin(phi2) / sin(phi) * q2) * v
+// q3 = sin(phi1) / sin(phi) * q1 + sin(phi2) / sin(phi) * q2
 
 static inline quat slerp(quat q1, quat q2, float alpha)
 {
@@ -152,36 +158,47 @@ static inline quat slerp(quat q1, quat q2, float alpha)
     float scale2;
     float dot_q1q2 = dot(q1, q2);
 
-    if(1.f - abs(dot_q1q2) < 1e-8f)
+    float phi = acos(abs(dot_q1q2));
+
+    if(phi < 1e-4f)
     {
         scale1 = 1.f - alpha;
         scale2 = alpha;
     }
     else
     {
-        float phi = acos(dot_q1q2);
-        float phi1 = (1.f - alpha) * phi;
-        float phi2 = alpha * phi;
-        scale1 = sin(phi1) / sin(phi);
-        scale2 = sin(phi2) / sin(phi);
+        scale1 = sin((1.f - alpha) * phi) / sin(phi);
+        scale2 = sin(alpha * phi) / sin(phi);
     }
 
     if(dot_q1q2 < 0.f)
     {
-        scale1 = - scale1;
+        scale2 = -scale2;
     }
 
     return scale1 * q1 + scale2 * q2;
 }
 
-static inline vec3 quat_to_avel(quat q)
+static inline vec3 quat_to_avel(quat last, quat curr, float dt = 0.0166667f)
 {
-    return vec3();
+    quat diff = curr * inv_quat(last);
+    float scale;
+    if(diff.w > 0.99f)
+    {
+        scale = 2.f / dt;
+    }
+    else
+    {
+        float theta = 2.f * acos(diff.w);
+        scale = theta / sin(theta / 2.f) / dt;
+    }
+    return scale * vec3(diff.x, diff.y, diff.z);
 }
 
-static inline quat avel_to_quat(vec3 v)
+static inline quat avel_to_quat(vec3 avel, float t)
 {
-    return quat();
+    float theta = rad_to_deg(length(avel) * t);
+    return quat(theta, avel);
 }
 
 

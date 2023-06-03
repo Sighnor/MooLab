@@ -192,6 +192,16 @@ static inline vec3 angle_to_dir(vec2 angle)
     return vec3(sin(angle.x) * sin(angle.y), cos(angle.y), cos(angle.x) * sin(angle.y));
 }
 
+static inline vec3 vec_to_vel(vec3 last, vec3 curr, float dt = 0.0166667f)
+{
+    return (curr - last) / dt;
+}
+
+static inline vec3 vel_to_vec(vec3 vel, float t)
+{
+    return vel * t;
+}
+
 struct vec4
 {
     vec4() : x(), y(), z(), w() {}
