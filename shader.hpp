@@ -6,7 +6,7 @@
 #include "mat.hpp"
 #include "texture.hpp"
 #include "vec.hpp"
-
+//
 enum FBO_types
 {
     color    = 0,
