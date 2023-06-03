@@ -4,7 +4,7 @@
 #include "array.hpp"
 #include "mesh.hpp"
 #include "quat.hpp"
-//骨骼名称
+
 enum Bones
 {
     Bone_Entity        = 0,
