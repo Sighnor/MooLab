@@ -181,6 +181,22 @@ void batch_forward_kinematics_part(
     }
 }
 
+void batch_forward_kinematics_root(
+    const BVH_Motion &motion,
+    int frame_num, 
+    slice1d<vec3> bone_anim_positions, 
+    slice1d<quat> bone_anim_rotations)
+{
+    for(int i = 0; i < motion.nbones(); i++)
+    {
+            bone_anim_rotations(i) = 
+                motion.bone_rotations(frame_num, 0) * bone_anim_rotations(i);
+            bone_anim_positions(i) = 
+                motion.bone_positions(frame_num, 0) + 
+                motion.bone_rotations(frame_num, 0) * bone_anim_positions(i);
+    }
+}
+
 void decompose_rotation_with_yaxis(
     quat &Ry, 
     quat &Rxz, 
@@ -189,7 +205,7 @@ void decompose_rotation_with_yaxis(
     // vec3 yxz = quat_to_euler_YXZ(rotation);
     // Ry = euler_YXZ_to_quat(yxz.x, 0.f, 0.f);
     // Rxz = euler_YXZ_to_quat(0.f, yxz.y, yxz.z);
-    vec2 y_xz = dir_to_angle(rotation * vec3(0.f, 0.f, 1.f));
+    vec2 y_xz = dir_to_sph(rotation * vec3(0.f, 0.f, 1.f));
     Ry = euler_YXZ_to_quat(rad_to_deg(y_xz.x), 0.f, 0.f);
     Rxz = euler_YXZ_to_quat(0.f, rad_to_deg(y_xz.y - PI / 2.f), 0.f);
 }
@@ -255,8 +271,6 @@ BVH_Motion blend_two_motions(
     BVH_Motion res(alpha.size, motion1.nbones());
     res.bone_ids = motion1.bone_ids;
     res.bone_parents = motion1.bone_parents;
-    res.bone_positions = motion1.bone_positions;
-    res.bone_rotations = motion1.bone_rotations;
 
     for(int i = 0; i < alpha.size; i++)
     {
@@ -344,27 +358,20 @@ BVH_Motion concatenate_two_motions(
     vec3 facing_axis = rot * vec3(0, 0, 1);
     
     BVH_Motion res2 = translation_and_rotation(motion2, 0, pos, facing_axis);
-    // BVH_Motion res2;
-
-    // res2.bone_ids = motion2.bone_ids;
-    // res2.bone_parents = motion2.bone_parents;
-    // res2.bone_positions = motion2.bone_positions;
-    // res2.bone_rotations = motion2.bone_rotations;
 
     BVH_Motion mix_motion0 = motion_sub_sequence(res1, 0, mix_frame);
-    BVH_Motion mix_motion1 = motion_sub_sequence(res1, mix_frame, mix_frame + mix_time);
+    BVH_Motion mix_motion1 = motion_sub_sequence(res1, mix_frame, mix_frame + 1);
     BVH_Motion mix_motion2 = motion_sub_sequence(res2, 0, mix_time);
-    BVH_Motion mix_motion3 = motion_sub_sequence(res2, mix_time, motion2.nframes() - 1);
+    BVH_Motion mix_motion3 = motion_sub_sequence(res2, mix_time, motion2.nframes());
 
     array1d<float> alpha(mix_time);
     for(int t = 0; t < mix_time; t++)
     {
-        alpha(t) = float(t) / mix_time;
+        alpha(t) = float(t) / (mix_time - 1);
     }
     BVH_Motion mix_motion = blend_two_motions(mix_motion1, mix_motion2, alpha);
 
-    BVH_Motion res = motion_concatenate(mix_motion0, mix_motion);
-    res = motion_concatenate(res, mix_motion3);
+    BVH_Motion res = motion_concatenate(motion_concatenate(mix_motion0, mix_motion), mix_motion3);
     
     return res;
 }

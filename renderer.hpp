@@ -14,9 +14,9 @@ enum G_buffer
     depth_buffer       = 3,
 };
 
-struct Renderer
+struct MooRenderer
 {
-    std::vector<Model*> models;
+    std::vector<MooModel*> models;
     std::vector<Point_Light*> point_lights;
     std::vector<Polygon_Light*> polygon_lights;
 };
@@ -31,7 +31,7 @@ struct updated_paramters
 };
 
 void bind_geometry_info(
-    Shader &shader, 
+    MooShader &shader, 
     int triangle_count, 
     unsigned short *indices, 
     vec3 *vertices, 
@@ -58,7 +58,7 @@ void bind_geometry_info(
     }
 }
 
-void bind_camera_parameters(Shader &shader, Model *model, Camera &camera)
+void bind_camera_parameters(MooShader &shader, MooModel *model, MooCamera &camera)
 {
     shader.model_matrix = model->transform;
     shader.view_matrix = camera.get_view_matrix();
@@ -71,7 +71,7 @@ void bind_camera_parameters(Shader &shader, Model *model, Camera &camera)
     shader.G_buffer = camera.fbo;
 }
 
-void bind_material_parameters(Shader &shader, Material &material)
+void bind_material_parameters(MooShader &shader, MooMaterial &material)
 {
     shader.albedo_map = &material.tex;
     shader.BRDFLut = &material.BRDFLut;
@@ -83,7 +83,7 @@ void bind_material_parameters(Shader &shader, Material &material)
     shader.roughness = material.roughness;
 }
 
-void update_material_parameters(Shader &shader, updated_paramters *par)
+void update_material_parameters(MooShader &shader, updated_paramters *par)
 {
     shader.shadow_map = par->shadow_map;
     shader.light_pos = *par->light_pos;
@@ -91,7 +91,7 @@ void update_material_parameters(Shader &shader, updated_paramters *par)
     shader.light_radiance = *par->light_radiance;
 }
 
-void rasterizer(Shader &shader, FBO *fbo, bool ifdraw)
+void rasterizer(MooShader &shader, FBO *fbo, bool ifdraw)
 {
     mat4 modelview_matrix = shader.view_matrix * shader.model_matrix;
     mat4 projection_matrix = shader.projection_matrix;
@@ -165,7 +165,7 @@ void rasterizer(Shader &shader, FBO *fbo, bool ifdraw)
     }
 }
 
-void draw(Model *model, Camera &camera, FBO *fbo, updated_paramters *par, bool ifdraw)
+void draw(MooModel *model, MooCamera &camera, FBO *fbo, updated_paramters *par, bool ifdraw)
 {
     for(int i = 0; i < model->mesh_count; i++)
     {
@@ -193,10 +193,15 @@ void draw(Model *model, Camera &camera, FBO *fbo, updated_paramters *par, bool i
     }
 }
 
-void draw_point(vec3 point, Camera &camera, FBO *fbo, vec3 color)
+void draw_point(vec3 point, MooCamera &camera, FBO *fbo, vec3 color)
 {
     mat4 view_matrix = camera.get_view_matrix();
     mat4 projection_matrix = camera.get_projection_matrix();
+    vec4 v = view_matrix * pos_to_vec4(point);
+    if(- v.z < camera.z_near)
+    {
+        return;
+    }
     vec4 p = standardize(projection_matrix * view_matrix * pos_to_vec4(point));
 
     int x = 0.5f * fbo->cols * (1.f + p.x);

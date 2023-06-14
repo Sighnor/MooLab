@@ -10,7 +10,7 @@ enum Material_Type
     PBR         = 1,
 };
 
-struct Material
+struct MooMaterial
 {
   Material_Type material_type;
 
@@ -24,7 +24,7 @@ struct Material
   texture BRDFLut;
   texture EavgLut;
 
-  Material(Material_Type _material_type) : material_type(_material_type) {}
+  MooMaterial(Material_Type _material_type) : material_type(_material_type) {}
 };
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

@@ -32,7 +32,7 @@ struct fragment_payload
     float depth;
 };
 
-struct Shader
+struct MooShader
 {
     Material_Type shader_type;
 
@@ -76,13 +76,13 @@ struct Shader
         float depth);
     vec3 pbr_shader(fragment_payload &frag);
 
-    Shader() 
+    MooShader() 
     {
         triangle_count = 0;
     }
 };
 
-void Shader::resize(int _triangle_count)
+void MooShader::resize(int _triangle_count)
 {
     triangle_count = _triangle_count;
     ver = (vertex_payload *)malloc(triangle_count * sizeof(vertex_payload));
@@ -104,7 +104,7 @@ void Shader::resize(int _triangle_count)
     }
 }
 
-fragment_payload Shader::get_fragment_payload(
+fragment_payload MooShader::get_fragment_payload(
         int ver_id, 
         float alpha, 
         float beta, 
@@ -121,7 +121,7 @@ fragment_payload Shader::get_fragment_payload(
     return frag;
 }
 
-vec3 Shader::pbr_shader(fragment_payload &frag)
+vec3 MooShader::pbr_shader(fragment_payload &frag)
 {
     vec3 albedo = 0.5f; //powv((*albedo_map)(frag.fragment_texcoords), 2.2f);
 

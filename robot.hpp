@@ -213,9 +213,9 @@ void robot_forward_kinematics_quaternions(
     }
 }
 
-Mesh make_robot_rest_mesh(const Robot &robot)
+MooMesh make_robot_rest_mesh(const Robot &robot)
 {
-    Mesh mesh;
+    MooMesh mesh;
 
     mesh.vertex_count = robot.all_rest_positions.size;
     mesh.triangle_count = robot.indices.size / 3;
@@ -236,7 +236,7 @@ void deform_robot_anim_mesh(
     const Robot &robot,
     const slice1d<vec3> bone_anim_positions,
     const slice1d<quat> bone_anim_rotations,
-    Mesh &mesh)
+    MooMesh &mesh)
 {
     linear_blend_positions(
         slice1d<vec3>(mesh.vertex_count, (vec3 *)mesh.vertices),

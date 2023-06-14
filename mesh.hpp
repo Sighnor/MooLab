@@ -3,7 +3,7 @@
 
 #include "mat.hpp"
 
-struct Mesh
+struct MooMesh
 {
     int vertex_count;
     int triangle_count;
@@ -13,9 +13,9 @@ struct Mesh
     unsigned short* indices;
 };
 
-Mesh triangle(mat3 orientation, vec3 position)
+MooMesh triangle(mat3 orientation, vec3 position)
 {
-    Mesh mesh;
+    MooMesh mesh;
 
     float vertices[9] = {
             -1.f, 0.f, 0.f,
@@ -50,9 +50,9 @@ Mesh triangle(mat3 orientation, vec3 position)
     return mesh;
 }
 
-Mesh light_cube(mat3 orientation, vec3 position)
+MooMesh light_cube(mat3 orientation, vec3 position)
 {
-    Mesh mesh;
+    MooMesh mesh;
 
     float vertices[72] = {
             // Front face

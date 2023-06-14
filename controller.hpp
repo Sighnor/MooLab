@@ -41,6 +41,8 @@ struct Controller
             float k, 
             float dt, 
             vec3 input);
+
+    void dir_gamepad_control(vec3 input, float k);
 };
 
 void Controller::pos_pid_control(
@@ -76,7 +78,7 @@ void Controller::dir_pid_control(
     static vec2 ang_ek_1 = vec2(0.f);
     static vec2 ang_ek_2 = vec2(0.f);
 
-    vec2 target_ang = dir_to_angle(input);
+    vec2 target_ang = dir_to_sph(input);
 
     ang_ek_2 = ang_ek_1;
     ang_ek_1 = ang_ek_0;
@@ -89,16 +91,23 @@ void Controller::dir_pid_control(
     ang = ang + ang_vel * dt;
 
     ang.x = circulate_float(ang.x, - PI, PI);
+    ang.y = circulate_float(ang.y, 0.f, PI);
 
-    *dir = angle_to_dir(ang);
+    *dir = sph_to_dir(ang);
+}
+
+void Controller::dir_gamepad_control(vec3 input, float k)
+{
+    ang.x = circulate_float(ang.x - k * input.x, - PI, PI);
+    ang.y = clampf(ang.y + k * input.z, PI / 2, PI - 0.1f);
+    *dir = sph_to_dir(ang);
 }
 
 void bind_controller(Controller &c, vec3 *pos, vec3 *dir)
 {
     c.pos = pos;
     c.dir = dir;
-    c.ang = dir_to_angle(*dir);
+    c.ang = dir_to_sph(*dir);
 }
-
 
 #endif

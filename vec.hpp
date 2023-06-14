@@ -178,7 +178,7 @@ static inline vec3 mix(vec3 F0, vec3 albedo, float matallic)
     return F0;
 }
 
-static inline vec2 dir_to_angle(vec3 v)
+static inline vec2 dir_to_sph(vec3 v)
 {
     vec3 dir = normalize(v);
     float phi = acos(dir.y);
@@ -187,7 +187,7 @@ static inline vec2 dir_to_angle(vec3 v)
     return vec2(theta, phi);
 }
 
-static inline vec3 angle_to_dir(vec2 angle)
+static inline vec3 sph_to_dir(vec2 angle)
 {
     return vec3(sin(angle.x) * sin(angle.y), cos(angle.y), cos(angle.x) * sin(angle.y));
 }
