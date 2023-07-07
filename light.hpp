@@ -33,7 +33,7 @@ MooModel get_light_model(Point_Light &light)
 
 struct Polygon_Light
 {
-    std::vector<vec3> light_positions;
+    array1d<vec3> light_positions;
     vec3 light_direction;
     vec3 light_radiance;
 };

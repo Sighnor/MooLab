@@ -6,7 +6,7 @@
 struct Robot
 {
     array1d<int> bone_ids;
-    array1d<vec3> bone_offset_positions;
+    array1d<vec3> bone_local_positions;
     array1d<vec3> bone_rest_positions;
     array1d<quat> bone_rest_rotations;
     array1d<int> bone_parents;
@@ -23,7 +23,7 @@ struct Robot
     void resize_bone(int bones_size)
     {
         bone_ids.resize(bones_size);
-        bone_offset_positions.resize(bones_size);
+        bone_local_positions.resize(bones_size);
         bone_rest_positions.resize(bones_size);
         bone_rest_rotations.resize(bones_size);
         bone_parents.resize(bones_size);
@@ -46,7 +46,7 @@ void robot_load(Robot& robot, const char* filename)
     assert(f != NULL);
 
     array1d_read(robot.bone_ids, f);
-    array1d_read(robot.bone_offset_positions, f);
+    array1d_read(robot.bone_local_positions, f);
     array1d_read(robot.bone_rest_positions, f);
     array1d_read(robot.bone_rest_rotations, f);
     array1d_read(robot.bone_parents, f);
@@ -68,7 +68,7 @@ void robot_save(Robot& robot, const char* filename)
     assert(f != NULL);
 
     array1d_write(robot.bone_ids, f);
-    array1d_write(robot.bone_offset_positions, f);
+    array1d_write(robot.bone_local_positions, f);
     array1d_write(robot.bone_rest_positions, f);
     array1d_write(robot.bone_rest_rotations, f);
     array1d_write(robot.bone_parents, f);
@@ -116,8 +116,8 @@ void robot_evaluate(
     positions(2) = 0.f;
     positions(3) = rotations(1);
     positions(4) = 0.f;
-    positions(5) = 0.f;
-    positions(6) = rotations(2);
+    positions(5) = rotations(2);
+    positions(6) = 0.f;
     positions(7) = rotations(3);
 }
 
@@ -166,7 +166,7 @@ void robot_forward_kinematics_positions(
         if(parent_id == -1)
         {
             bone_anim_rotations(i) = quat(trans_positions(i), vec3(0.f, 1.f, 0.f));
-            bone_anim_positions(i) = robot.bone_offset_positions(i);
+            bone_anim_positions(i) = robot.bone_local_positions(i);
         }
         else
         {
@@ -174,7 +174,7 @@ void robot_forward_kinematics_positions(
                 bone_anim_rotations(parent_id) * quat(trans_positions(i), vec3(1.f, 0.f, 0.f));
             bone_anim_positions(i) = 
                 bone_anim_positions(parent_id) + 
-                bone_anim_rotations(parent_id) * robot.bone_offset_positions(i);
+                bone_anim_rotations(parent_id) * robot.bone_local_positions(i);
         }
     }
 }
@@ -200,7 +200,7 @@ void robot_forward_kinematics_quaternions(
         if(parent_id == -1)
         {
             bone_anim_rotations(i) = trans_quaternions(i);
-            bone_anim_positions(i) = robot.bone_offset_positions(i);
+            bone_anim_positions(i) = robot.bone_local_positions(i);
         }
         else
         {
@@ -208,7 +208,7 @@ void robot_forward_kinematics_quaternions(
                 bone_anim_rotations(parent_id) * trans_quaternions(i);
             bone_anim_positions(i) = 
                 bone_anim_positions(parent_id) + 
-                bone_anim_rotations(parent_id) * robot.bone_offset_positions(i);
+                bone_anim_rotations(parent_id) * robot.bone_local_positions(i);
         }
     }
 }
@@ -265,12 +265,12 @@ Robot create_robot(float r, float h, int r_size, int h_size, int bones_size, flo
     for(int i = 0; i < bones_size; i++)
     {
         robot.bone_ids(i) = i;
-        robot.bone_offset_positions(i) = vec3(0.f, h / bones_size, 0.f);
-        robot.bone_rest_positions(i) = vec3(0.f, h * i / bones_size, 0.f);
+        robot.bone_local_positions(i) = vec3(0.f, h / (bones_size - 1), 0.f);
+        robot.bone_rest_positions(i) = vec3(0.f, h * i / (bones_size - 1), 0.f);
         robot.bone_rest_rotations(i) = quat(1.f, 0.f, 0.f, 0.f);
         robot.bone_parents(i) = i - 1;
     }
-    robot.bone_offset_positions(0) = vec3(0.f);
+    robot.bone_local_positions(0) = vec3(0.f);
 
     int triangles_size = 2 * r_size + 2 * h_size * r_size;
     int vertices_size = 2 + (h_size + 1) * r_size;
@@ -311,33 +311,48 @@ Robot create_robot(float r, float h, int r_size, int h_size, int bones_size, flo
             robot.all_rest_normals(id) = normalize(vec3(sin(phi), 0.f, cos(phi)));
             robot.texcoords(id) = vec2(phi / 2.f / PI, k);
 
-            std::map<int, float> temp;
+            std::map<int, float> distances;
             
             for(int bone_id = 0; bone_id < bones_size; bone_id++)
             {
-                temp[bone_id] = length(
-                                robot.all_rest_positions(id) - 
-                                (robot.bone_rest_positions(bone_id) + robot.bone_offset_positions(bone_id)));
+                distances[bone_id] = length(robot.all_rest_positions(id) - robot.bone_rest_positions(bone_id));
             }
 
-            std::vector<std::pair<int, float>> distances(temp.begin(), temp.end());
+            std::vector<std::pair<int, float>> weights(distances.begin(), distances.end());
+            sort(weights.begin(), weights.end(), compare_map_int_float);
 
-            sort(distances.begin(), distances.end(), compare_map_int_float);
-            
+            for(int i = 0; i < 4; i++)
+            {
+                int bone_id = weights[i].first;
+                if(robot.bone_parents(bone_id) == -1)
+                {
+                    weights[i].first = 0;
+                    weights[i].second = 0.f;
+                }
+                else
+                {
+                    vec3 v1 = robot.all_rest_positions(id) - robot.bone_rest_positions(robot.bone_parents(bone_id));
+                    vec3 v2 = robot.bone_local_positions(bone_id);
+                    weights[i].first = robot.bone_parents(bone_id);
+                    weights[i].second = weights_function(dot(v1, v2) / length(v2) / length(v2));
+                }
+            }
+            // std::cout << weights[0].second << weights[1].second << weights[2].second << weights[3].second << std::endl;
+
             vec4 bone_weight = to_one(vec4(
-                                        1.f / distances[0].second, 
-                                        1.f / distances[1].second, 
-                                        1.f / distances[2].second, 
-                                        1.f / distances[3].second));
+                                        weights[0].second,  
+                                        weights[1].second, 
+                                        weights[2].second, 
+                                        weights[3].second));
 
             robot.bone_weights(id, 0) = bone_weight.x;
             robot.bone_weights(id, 1) = bone_weight.y;
             robot.bone_weights(id, 2) = bone_weight.z;
             robot.bone_weights(id, 3) = bone_weight.w;
-            robot.bone_weights_ids(id, 0) = distances[0].first;
-            robot.bone_weights_ids(id, 1) = distances[1].first;
-            robot.bone_weights_ids(id, 2) = distances[2].first;
-            robot.bone_weights_ids(id, 3) = distances[3].first;
+            robot.bone_weights_ids(id, 0) = weights[0].first;
+            robot.bone_weights_ids(id, 1) = weights[1].first;
+            robot.bone_weights_ids(id, 2) = weights[2].first;
+            robot.bone_weights_ids(id, 3) = weights[3].first;
         }
     }
 

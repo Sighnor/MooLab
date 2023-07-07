@@ -141,4 +141,31 @@ static inline float get_random_int()
     return dis(eng);
 }
 
+static inline float weights_function(float k)
+{
+    // if(k >= -0.2f && k <= 0.2f)
+    // {
+    //     return 0.5f + 2.5f * k;
+    // }
+    // else if(k > 0.2f && k < 0.8f)
+    // {
+    //     return 1.f;
+    // }
+    // else if(k >= 0.8f && k <= 1.2f)
+    // {
+    //     return 3.f - 2.5f * k;
+    // }
+
+    if(k > 0.5f)
+    {
+        return exp(-(k - 0.5f) * (k - 0.5f) / (1.5f));
+    }
+    else
+    {
+        return exp(-(k - 0.5f) * (k - 0.5f) / (0.25f));
+    }
+
+    // return 0.f;
+}
+
 #endif

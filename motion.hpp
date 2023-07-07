@@ -37,18 +37,18 @@ enum Motion_Bones
 struct BVH_Motion
 {
     array1d<int> bone_ids;
-    array2d<vec3> bone_positions;
-    array2d<quat> bone_rotations;
+    array2d<vec3> bone_local_positions;
+    array2d<quat> bone_local_rotations;
     array1d<int> bone_parents;
 
-    int nframes() const { return bone_positions.rows; }
-    int nbones() const { return bone_positions.cols; }
+    int nframes() const { return bone_local_positions.rows; }
+    int nbones() const { return bone_local_positions.cols; }
 
     // BVH_Motion& operator = (const BVH_Motion& motion) 
     // {
     //     bone_ids = motion.bone_ids;
-    //     bone_positions = motion.bone_positions;
-    //     bone_rotations = motion.bone_rotations;
+    //     bone_local_positions = motion.bone_local_positions;
+    //     bone_local_rotations = motion.bone_local_rotations;
     //     bone_parents = motion.bone_parents;
 
     //     return *this;
@@ -58,13 +58,13 @@ struct BVH_Motion
     BVH_Motion(int nframes, int nbones)
     {
         bone_ids.resize(nbones);
-        bone_positions.resize(nframes, nbones);
-        bone_rotations.resize(nframes, nbones);
+        bone_local_positions.resize(nframes, nbones);
+        bone_local_rotations.resize(nframes, nbones);
         bone_parents.resize(nbones);
 
         bone_ids.zero();
-        bone_positions.zero();
-        bone_rotations.zero();
+        bone_local_positions.zero();
+        bone_local_rotations.zero();
         bone_parents.zero();
     }
 };
@@ -75,8 +75,8 @@ void Motion_load(BVH_Motion &motion, const char* file_name)
     assert(f != NULL);
 
     array1d_read(motion.bone_ids, f);
-    array2d_read(motion.bone_positions, f);
-    array2d_read(motion.bone_rotations, f);
+    array2d_read(motion.bone_local_positions, f);
+    array2d_read(motion.bone_local_rotations, f);
     array1d_read(motion.bone_parents, f);
 
     fclose(f);
@@ -88,8 +88,8 @@ void Motion_save(BVH_Motion &motion, const char* file_name)
     assert(f != NULL);
 
     array1d_write(motion.bone_ids, f);
-    array2d_write(motion.bone_positions, f);
-    array2d_write(motion.bone_rotations, f);
+    array2d_write(motion.bone_local_positions, f);
+    array2d_write(motion.bone_local_rotations, f);
     array1d_write(motion.bone_parents, f);
 
     fclose(f);
@@ -101,8 +101,8 @@ BVH_Motion motion_sub_sequence(const BVH_Motion &motion, int begin, int end)
 
     res.bone_ids = motion.bone_ids;
     res.bone_parents = motion.bone_parents;
-    res.bone_positions = array2d__sub_sequence(motion.bone_positions, begin, end);
-    res.bone_rotations = array2d__sub_sequence(motion.bone_rotations, begin, end);
+    res.bone_local_positions = array2d__sub_sequence(motion.bone_local_positions, begin, end);
+    res.bone_local_rotations = array2d__sub_sequence(motion.bone_local_rotations, begin, end);
 
     return res;
 }
@@ -113,8 +113,8 @@ BVH_Motion motion_concatenate(const BVH_Motion &motion1, const BVH_Motion &motio
 
     res.bone_ids = motion1.bone_ids;
     res.bone_parents = motion1.bone_parents;
-    res.bone_positions = array2d__concatenate(motion1.bone_positions, motion2.bone_positions);
-    res.bone_rotations = array2d__concatenate(motion1.bone_rotations, motion2.bone_rotations);
+    res.bone_local_positions = array2d__concatenate(motion1.bone_local_positions, motion2.bone_local_positions);
+    res.bone_local_rotations = array2d__concatenate(motion1.bone_local_rotations, motion2.bone_local_rotations);
 
     return res;
 }
@@ -135,16 +135,16 @@ void batch_forward_kinematics_full(
 
         if(parent_id == -1)
         {
-            bone_anim_rotations(i) = motion.bone_rotations(frame_num, i);
-            bone_anim_positions(i) = motion.bone_positions(frame_num, i);
+            bone_anim_rotations(i) = motion.bone_local_rotations(frame_num, i);
+            bone_anim_positions(i) = motion.bone_local_positions(frame_num, i);
         }
         else
         {
             bone_anim_rotations(i) = 
-                bone_anim_rotations(parent_id) * motion.bone_rotations(frame_num, i);
+                bone_anim_rotations(parent_id) * motion.bone_local_rotations(frame_num, i);
             bone_anim_positions(i) = 
                 bone_anim_positions(parent_id) + 
-                bone_anim_rotations(parent_id) * motion.bone_positions(frame_num, i);
+                bone_anim_rotations(parent_id) * motion.bone_local_positions(frame_num, i);
         }
     }
 }
@@ -173,10 +173,10 @@ void batch_forward_kinematics_part(
         else
         {
             bone_anim_rotations(i) = 
-                bone_anim_rotations(parent_id) * motion.bone_rotations(frame_num, i);
+                bone_anim_rotations(parent_id) * motion.bone_local_rotations(frame_num, i);
             bone_anim_positions(i) = 
                 bone_anim_positions(parent_id) + 
-                bone_anim_rotations(parent_id) * motion.bone_positions(frame_num, i);
+                bone_anim_rotations(parent_id) * motion.bone_local_positions(frame_num, i);
         }
     }
 }
@@ -190,10 +190,10 @@ void batch_forward_kinematics_root(
     for(int i = 0; i < motion.nbones(); i++)
     {
             bone_anim_rotations(i) = 
-                motion.bone_rotations(frame_num, 0) * bone_anim_rotations(i);
+                motion.bone_local_rotations(frame_num, 0) * bone_anim_rotations(i);
             bone_anim_positions(i) = 
-                motion.bone_positions(frame_num, 0) + 
-                motion.bone_rotations(frame_num, 0) * bone_anim_positions(i);
+                motion.bone_local_positions(frame_num, 0) + 
+                motion.bone_local_rotations(frame_num, 0) * bone_anim_positions(i);
     }
 }
 
@@ -220,18 +220,18 @@ BVH_Motion translation_and_rotation(
 
     res.bone_ids = motion.bone_ids;
     res.bone_parents = motion.bone_parents;
-    res.bone_positions = motion.bone_positions;
-    res.bone_rotations = motion.bone_rotations;
+    res.bone_local_positions = motion.bone_local_positions;
+    res.bone_local_rotations = motion.bone_local_rotations;
   
-    vec3 offset = target_translation_xz - motion.bone_positions(frame_num, 0);
+    vec3 offset = target_translation_xz - motion.bone_local_positions(frame_num, 0);
 
     for(int t = 0; t < res.nframes(); t++)
     {
-        res.bone_positions(t, 0) = res.bone_positions(t, 0) + offset;
+        res.bone_local_positions(t, 0) = res.bone_local_positions(t, 0) + offset;
     }
 
     quat Ry, Rxz;
-    decompose_rotation_with_yaxis(Ry, Rxz, res.bone_rotations(frame_num, 0));
+    decompose_rotation_with_yaxis(Ry, Rxz, res.bone_local_rotations(frame_num, 0));
     quat invRyxz = inv_quat(Ry * Rxz);
 
     if(target_facing_direction_xz.x == 0.f && target_facing_direction_xz.z > 0.f)
@@ -255,9 +255,9 @@ BVH_Motion translation_and_rotation(
 
     for(int t = 0; t < res.nframes(); t++)
     {
-        res.bone_rotations(t, 0) = Q * res.bone_rotations(t, 0);
-        res.bone_positions(t, 0) = res.bone_positions(frame_num, 0) + 
-            Q * (res.bone_positions(t, 0) - res.bone_positions(frame_num, 0));
+        res.bone_local_rotations(t, 0) = Q * res.bone_local_rotations(t, 0);
+        res.bone_local_positions(t, 0) = res.bone_local_positions(frame_num, 0) + 
+            Q * (res.bone_local_positions(t, 0) - res.bone_local_positions(frame_num, 0));
     }
 
     return res;
@@ -280,11 +280,11 @@ BVH_Motion blend_two_motions(
 
         for(int id = 0; id < res.nbones(); id++)
         {
-            res.bone_positions(i, id) = 
-                lerp(motion1.bone_positions(j, id), motion2.bone_positions(k, id), alpha(i));
+            res.bone_local_positions(i, id) = 
+                lerp(motion1.bone_local_positions(j, id), motion2.bone_local_positions(k, id), alpha(i));
 
-            res.bone_rotations(i, id) = 
-                slerp(motion1.bone_rotations(j, id), motion2.bone_rotations(k, id), alpha(i));
+            res.bone_local_rotations(i, id) = 
+                slerp(motion1.bone_local_rotations(j, id), motion2.bone_local_rotations(k, id), alpha(i));
         }
     }
     return res; 
@@ -299,21 +299,21 @@ BVH_Motion build_loop_motion(
 
     res.bone_ids = motion.bone_ids;
     res.bone_parents = motion.bone_parents;
-    res.bone_positions = motion.bone_positions;
-    res.bone_rotations = motion.bone_rotations;
+    res.bone_local_positions = motion.bone_local_positions;
+    res.bone_local_rotations = motion.bone_local_rotations;
     
     for(int ib = 0; ib < res.nbones(); ib++)
     {
-        quat avel_begin = res.bone_rotations(0, ib);
-        quat avel_end = res.bone_rotations(res.nframes() - 1, ib);
+        quat avel_begin = res.bone_local_rotations(0, ib);
+        quat avel_end = res.bone_local_rotations(res.nframes() - 1, ib);
     
         vec3 rot_diff = quat_to_avel(avel_begin, avel_end);
         vec3 avel_diff = quat_to_avel(quat(1.0f, 0.0f, 0.f, 0.f), avel_end) - quat_to_avel(quat(1.0f, 0.0f, 0.f, 0.f), avel_begin);
 
-        vec3 vel1 = res.bone_positions(res.nframes() - 1, ib) - res.bone_positions(res.nframes() - 2, ib);
-        vec3 vel2 = res.bone_positions(1, ib) - res.bone_positions(0, ib);
+        vec3 vel1 = res.bone_local_positions(res.nframes() - 1, ib) - res.bone_local_positions(res.nframes() - 2, ib);
+        vec3 vel2 = res.bone_local_positions(1, ib) - res.bone_local_positions(0, ib);
 
-        vec3 pos_diff = vec3(00.f, res.bone_positions(res.nframes() - 1, ib).y - res.bone_positions(0, ib).y, 0.f);
+        vec3 pos_diff = vec3(00.f, res.bone_local_positions(res.nframes() - 1, ib).y - res.bone_local_positions(0, ib).y, 0.f);
         vec3 vel_diff = (vel1 - vel2) / 60.f;
         
         //旋转差均匀分布到每一帧
@@ -331,9 +331,9 @@ BVH_Motion build_loop_motion(
                 -0.5 * pos_diff, -0.5 * vel_diff, half_life, (res.nframes() - t - 1) / fps);
             vec3 offset_pos = offset_pos1 + offset_pos2;
 
-            res.bone_rotations(t, ib) = offset_rot * motion.bone_rotations(t, ib);
+            res.bone_local_rotations(t, ib) = offset_rot * motion.bone_local_rotations(t, ib);
 
-            res.bone_positions(t, ib) =  offset_pos + res.bone_positions(t, ib);
+            res.bone_local_positions(t, ib) =  offset_pos + res.bone_local_positions(t, ib);
         }
     }
 
@@ -350,11 +350,11 @@ BVH_Motion concatenate_two_motions(
 
     res1.bone_ids = motion1.bone_ids;
     res1.bone_parents = motion1.bone_parents;
-    res1.bone_positions = motion1.bone_positions;
-    res1.bone_rotations = motion1.bone_rotations;
+    res1.bone_local_positions = motion1.bone_local_positions;
+    res1.bone_local_rotations = motion1.bone_local_rotations;
     
-    vec3 pos = res1.bone_positions(mix_frame, 0);
-    quat rot = res1.bone_rotations(mix_frame, 0);
+    vec3 pos = res1.bone_local_positions(mix_frame, 0);
+    quat rot = res1.bone_local_rotations(mix_frame, 0);
     vec3 facing_axis = rot * vec3(0, 0, 1);
     
     BVH_Motion res2 = translation_and_rotation(motion2, 0, pos, facing_axis);

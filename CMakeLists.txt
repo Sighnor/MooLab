@@ -20,6 +20,14 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
   endif()
 endif()
 
+add_library(raygui INTERFACE)
+file(GLOB sources ${RAYGUI_SRC}/*.h)
+set(RAYGUI_HEADERS ${sources})
+install(FILES
+    ${RAYGUI_HEADERS} DESTINATION include
+)
+target_include_directories(raygui INTERFACE ${RAYGUI_SRC})
+
 find_package( OpenMP REQUIRED)
 if(OPENMP_FOUND)
     message("OPENMP FOUND")
