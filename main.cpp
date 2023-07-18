@@ -7,6 +7,7 @@ extern "C"
 #include "motion.hpp"
 #include "character.hpp"
 #include "controller.hpp"
+#include "curve.hpp"
 #include "database.hpp"
 #include "motion.hpp"
 #include "nnet.hpp"
@@ -47,6 +48,19 @@ vec3 gamepad_get_stick(int stick, const float deadzone = 0.2f)
     return vec3(gamepadx, 0.0f, gamepady);
 }
 
+array1d<quat> transform_float_quat(const array1d<float> res, vec3 axis, quat q)
+{
+    array1d<quat> arr(res.size);
+    for(int i = 0; i < res.size; i++)
+    {
+        // arr(i) = q;
+        // arr(i) = quat(res(i), axis);
+        arr(i) = quat(res(i), axis) * q;
+        // std::cout << res(i) << std::endl;
+    }
+    return arr;
+}
+
 int main(int argc, char** argv)
 {
     InitWindow(720, 720, "raylib [background]");
@@ -65,14 +79,15 @@ int main(int argc, char** argv)
     Database db;
     Database_load(db, "../resources/database.bin");
     //对角色数据的拷贝
-    MooMesh mesh1 = make_character_rest_mesh(character);
+    MooMesh mesh0 = make_character_rest_mesh(character);
     //材质
     MooMaterial material0(PBR);
     material0.roughness = 0.1f;
+    material0.tex = img_to_tex("../resources/skybox.png");
     material0.BRDFLut = img_to_tex("../resources/BRDFLut.png");
     material0.EavgLut = img_to_tex("../resources/EavgLut.png");
     //model存储mesh的拷贝，但由于mesh本身存储的是地址，实际上仍为mesh地址上的数据
-    MooModel model1 = mesh_material_to_model(mesh1, material0);
+    MooModel model1 = mesh_material_to_model(mesh0, material0);
     //动作库
     int N = 100;
     BVH_Motion motion, motion1, motion2, motion3, motion4, motion5, motion6, active_motion, search_motion;
@@ -146,6 +161,42 @@ int main(int argc, char** argv)
     float dt = 1.f / 60.f;
 
     // std::cout << db.frames.size << ',' << db.velocities.size << ',' << db.features.rows << ',' << db.features.cols << std::endl;
+
+    // array1d<float> sh_points(5);
+    // array1d<float> el_points(5);
+    // array1d<float> wr_points(5);
+    // array1d<float> td(4);
+
+    // sh_points(0) = 105.f;
+    // sh_points(1) = 60.f;
+    // sh_points(2) = 15.f;
+    // sh_points(3) = 60.f;
+    // sh_points(4) = 105.f;
+
+    // el_points(0) = -80.f;
+    // el_points(1) = -100.f;
+    // el_points(2) = 0.f;
+    // el_points(3) = -70.f;
+    // el_points(4) = -80.f;
+
+    // wr_points(0) = 0.f;
+    // wr_points(1) = -60.f;
+    // wr_points(2) = 90.f;
+    // wr_points(3) = -10.f;
+    // wr_points(4) = 0.f;
+
+    // td(0) = 0.4f;
+    // td(1) = 0.1f;
+    // td(2) = 0.8f;
+    // td(3) = 1.2f;
+
+    // array1d<float> sh_curve_points = LFPB(sh_points, td, 10000, 0.0166667f);
+    // array1d<float> el_curve_points = LFPB(el_points, td, 10000, 0.0166667f);
+    // array1d<float> wr_curve_points = LFPB(wr_points, td, 10000, 0.0166667f);
+
+    // array1d<quat> sh_curve_quaternions = transform_float_quat(sh_curve_points, vec3(1.f, 0.f, 0.f), quat(0.f, vec3(0.f, 1.f, 0.f)));
+    // array1d<quat> el_curve_quaternions = transform_float_quat(el_curve_points, vec3(0.f, 0.f, 1.f), quat(1.f, 0.f, 0.f, 0.f));
+    // array1d<quat> wr_curve_quaternions = transform_float_quat(wr_curve_points, vec3(0.f, 1.f, 0.f), quat(90.f, vec3(1.f, 0.f, 0.f)));
 
     while (key != 27 && t < motion.nframes())
     {
@@ -236,17 +287,17 @@ int main(int argc, char** argv)
         //         contact_point);
         // }
 
-        batch_forward_kinematics_root(
-            active_motion, 
-            frame_num, 
-            curr_character_bone_anim_positions, 
-            curr_character_bone_anim_rotations);
+        // batch_forward_kinematics_root(
+        //     active_motion, 
+        //     frame_num, 
+        //     curr_character_bone_anim_positions, 
+        //     curr_character_bone_anim_rotations);
 
         deform_character_anim_mesh(
             character, 
             curr_character_bone_anim_positions, 
             curr_character_bone_anim_rotations, 
-            mesh1);
+            mesh0);
 
         // vel = inv_quat(curr_character_bone_anim_rotations(Bone_Entity)) 
         //            * vec_to_vel(last_character_bone_anim_positions(Bone_Entity), curr_character_bone_anim_positions(Bone_Entity));
@@ -338,6 +389,10 @@ int main(int argc, char** argv)
             draw_point(curr_character_bone_anim_positions(Bone_RightToe), camera, &output0, vec3(0.f, 255.f, 0.f));
             // draw_point(contact_point, camera, &output0, vec3(0.f, 0.f, 255.f));
         }
+        draw_point(curr_character_bone_anim_positions(Bone_LeftShoulder), camera, &output0, vec3(0.f, 0.f, 255.f));
+        draw_point(curr_character_bone_anim_positions(Bone_LeftArm), camera, &output0, vec3(0.f, 0.f, 255.f));
+        draw_point(curr_character_bone_anim_positions(Bone_LeftForeArm), camera, &output0, vec3(0.f, 0.f, 255.f));
+        draw_point(curr_character_bone_anim_positions(Bone_LeftHand), camera, &output0, vec3(0.f, 0.f, 255.f));
 
         cv::imshow("MOOLIB", fbo_to_img(&output0));
 
@@ -354,13 +409,13 @@ int main(int argc, char** argv)
         features(t, 2) = ltoe;
         features(t, 3) = rtoe;
 
-        // std::cout << " Time: " << t << " Frame: " << frame_num 
+        std::cout << " Time: " << t << " Frame: " << frame_num 
         //           << " dir: " << camera.direction.x << ", " << camera.direction.y << ", " << camera.direction.z
         //           << "  vel: " << vel.x << ", " << vel.y << ", " << vel.z 
         //           << "  avel: " << avel.x << ", " << avel.y << ", " << avel.z 
         //           << " left: " << gamepadstick_left.x << ", " << gamepadstick_left.z 
         //           << " right: " << gamepadstick_right.x << ", " << gamepadstick_right.z
-        //           << std::endl;
+                  << std::endl;
         frame_num++;
         t++;
         key = cv::waitKey(1);

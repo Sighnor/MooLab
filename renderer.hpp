@@ -91,6 +91,33 @@ void update_material_parameters(MooShader &shader, updated_paramters *par)
     shader.light_radiance = *par->light_radiance;
 }
 
+bool inside_2dtriangle(const vec2 &p0, const vec2 &p1, const vec2 &p2, const vec2 &p, float &alpha, float &beta, float &gamma)
+{
+    alpha = ((p1.y - p2.y) * p.x + (p2.x - p1.x) * p.y + p1.x * p2.y - p2.x * p1.y) / ((p1.y - p2.y) * p0.x + (p2.x - p1.x) * p0.y + p1.x * p2.y - p2.x * p1.y);
+    beta = ((p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y + p2.x * p0.y - p0.x * p2.y) / ((p2.y - p0.y) * p1.x + (p0.x - p2.x) * p1.y + p2.x * p0.y - p0.x * p2.y);
+    gamma = ((p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y + p0.x * p1.y - p1.x * p0.y) / ((p0.y - p1.y) * p2.x + (p1.x - p0.x) * p2.y + p0.x * p1.y - p1.x * p0.y);
+
+    if(alpha >= 0.f && alpha <= 1.f && beta >= 0.f && beta <= 1.f && gamma >= 0.f && gamma <= 1.f)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool inside_3dtriangle(const vec3 &v0, const vec3 &v1, const vec3 &v2, const vec3 &v, float &alpha, float &beta, float &gamma)
+{
+    //v0, v1, v2逆时针
+    mat3 tri_matrix = inv_mat(get_coordinate_matrix(cross(v1 - v0, v2 - v0), vec3(0.f, 1.f, 0.f)));
+
+    vec2 p = vec3_to_vec2(tri_matrix * v);
+    vec2 p0 = vec3_to_vec2(tri_matrix * v0);
+    vec2 p1 = vec3_to_vec2(tri_matrix * v1);
+    vec2 p2 = vec3_to_vec2(tri_matrix * v2);
+
+    return inside_2dtriangle(p0, p1, p2, p, alpha, beta, gamma);
+}
+
 void rasterizer(MooShader &shader, FBO *fbo, bool ifdraw)
 {
     mat4 modelview_matrix = shader.view_matrix * shader.model_matrix;
@@ -139,7 +166,7 @@ void rasterizer(MooShader &shader, FBO *fbo, bool ifdraw)
                     {
                         switch (shader.shader_type)
                         {
-                            case Light:
+                            case LIGHT:
                             {
                                 fbo->getcolor(fbo_y, fbo_x) = clampv(255.f * shader.light_radiance);
                                 break;
@@ -154,6 +181,22 @@ void rasterizer(MooShader &shader, FBO *fbo, bool ifdraw)
                                 // fbo->getcolor(fbo_y, fbo_x) = clampv(255.f * 0.5f);
                                 // fbo->getcolor(fbo_y, fbo_x) = 255.f * fbo->getdepth(fbo_y, fbo_x);
                                 break;
+                            }
+                            case TEXTURE:
+                            {
+                                fragment_payload frag = shader.get_fragment_payload(i, alpha, beta, gamma, depth);
+
+                                vec3 color;
+                                color = 255.f * shader.texture_shader(frag);
+                                fbo->getcolor(fbo_y, fbo_x) = clampv(color);
+                            }
+                            case NORMALS:
+                            {
+                                fragment_payload frag = shader.get_fragment_payload(i, alpha, beta, gamma, depth);
+
+                                vec3 color;
+                                color = 255.f * shader.normal_shader(frag);
+                                fbo->getcolor(fbo_y, fbo_x) = clampv(color);
                             }
                             default:
                                 break;

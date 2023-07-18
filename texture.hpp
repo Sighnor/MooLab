@@ -7,7 +7,6 @@
 #include <opencv2\imgproc\imgproc.hpp>
 #include <opencv2\objdetect\objdetect.hpp>
 #include <opencv2\imgproc\types_c.h>
-#include "array.hpp"
 #include <assert.h>
 #include "vec.hpp"
 
@@ -36,6 +35,25 @@ struct FBO
     }
 };
 
+FBO contance_two_fbos(FBO *fbo0, FBO *fbo1, float r = 1.f, float c = 1.f)
+{
+    FBO fbo(r * fbo0->rows, c * (fbo0->cols + fbo1->cols));
+
+    for(int i = 0; i < fbo.rows; i++)
+    {
+        for(int j = 0; j < 0.5f * fbo.cols; j++)
+        {
+            fbo.getcolor(i, j) = fbo0->getcolor(0.5f * (1.f - r) * fbo0->rows + i, 0.5f * (1.f - c) * fbo0->cols + j);
+            fbo.getcolor(i, c * fbo0->cols + j) = fbo1->getcolor(0.5f * (1.f - r) * fbo0->rows + i, 0.5f * (1.f - c) * fbo0->cols + j);
+
+            fbo.getdepth(i, j) = fbo0->getdepth(0.5f * (1.f - r) * fbo0->rows + i, 0.5f * (1.f - c) * fbo0->cols + j);
+            fbo.getdepth(i, c * fbo0->cols + j) = fbo1->getdepth(0.5f * (1.f - r) * fbo0->rows + i, 0.5f * (1.f - c) * fbo0->cols + j);
+        }
+    }
+
+    return fbo;
+}
+
 cv::Mat fbo_to_img(FBO *fbo)
 {
     cv::Mat img(fbo->rows, fbo->cols, CV_32FC3, fbo->colors);
@@ -51,8 +69,18 @@ struct texture
     int rows;
     int cols;
     vec3* colors;
-    inline vec3& getcolor(int i, int j) const { assert(i >= 0 && i < rows && j >= 0 && j < cols); return colors[i * cols + j]; }
-    inline vec3& getcolor(vec2 v) const { assert(v.x >= 0 && v.x < rows && v.y >= 0 && v.y < cols); return colors[float_to_int(v.x) * cols + float_to_int(v.y)]; }
+    inline vec3& getcolor(float i, float j) const 
+    { 
+        int y = float_to_int(clampf(i * rows, 0.f, rows - 1));
+        int x = float_to_int(clampf(j * cols, 0.f, cols - 1));
+        return colors[y * cols + x]; 
+    }
+    inline vec3& getcolor(vec2 v) const 
+    {
+        int y = float_to_int(clampf(v.x * rows, 0.f, rows - 1));
+        int x = float_to_int(clampf(v.y * cols, 0.f, cols - 1));
+        return colors[y * cols + x]; 
+    }
 
     texture(){}
 };
@@ -62,6 +90,7 @@ texture img_to_tex(const char* name)
     texture tex;
     
     cv::Mat img = cv::imread(name);
+    cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
     img.convertTo(img, CV_32FC3, 1.0f);
 
     tex.rows = img.rows;
@@ -70,6 +99,16 @@ texture img_to_tex(const char* name)
     memcpy(tex.colors, (vec3*)img.data, img.rows * img.cols * sizeof(vec3));
 
     return tex;
+}
+
+cv::Mat tex_to_img(texture *tex)
+{
+    cv::Mat img(tex->rows, tex->cols, CV_32FC3, tex->colors);
+
+    img.convertTo(img, CV_8UC3, 1.0f);
+    cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
+    
+    return img;
 }
 
 #endif

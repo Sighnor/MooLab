@@ -266,7 +266,7 @@ BVH_Motion translation_and_rotation(
 BVH_Motion blend_two_motions(
     const BVH_Motion &motion1, 
     const BVH_Motion &motion2, 
-    array1d<float> alpha)
+    const slice1d<float> alpha)
 {
     BVH_Motion res(alpha.size, motion1.nbones());
     res.bone_ids = motion1.bone_ids;

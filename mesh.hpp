@@ -50,7 +50,7 @@ MooMesh triangle(mat3 orientation, vec3 position)
     return mesh;
 }
 
-MooMesh light_cube(mat3 orientation, vec3 position)
+MooMesh cube()
 {
     MooMesh mesh;
 

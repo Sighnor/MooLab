@@ -175,7 +175,7 @@ static inline vec3 powv(vec3 v, float f)
 
 static inline vec3 mix(vec3 F0, vec3 albedo, float matallic)
 {
-    return F0;
+    return albedo;
 }
 
 static inline vec2 dir_to_sph(vec3 v)

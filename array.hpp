@@ -167,6 +167,26 @@ void array2d_read(array2d<T>& arr, FILE* f)
 }
 
 template<typename T>
+void array2d__set_by_rows(array2d<T>& arr, const array1d<T>& res, int row_id)
+{
+    assert(arr.cols == res.size);
+    for(int i = 0; i < res.size; i++)
+    {
+        arr(row_id, i) = res(i);
+    }
+}
+
+template<typename T>
+void array2d__set_by_cols(array2d<T>& arr, const array1d<T>& res, int col_id)
+{
+    assert(arr.rows == res.size);
+    for(int i = 0; i < res.size; i++)
+    {
+        arr(i, col_id) = res(i);
+    }
+}
+
+template<typename T>
 array2d<T> array2d__sub_sequence(const array2d<T>& arr, int begin, int end)
 {
     array2d<T> res;

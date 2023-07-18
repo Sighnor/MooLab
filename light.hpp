@@ -26,7 +26,8 @@ struct Point_Light
 
 MooModel get_light_model(Point_Light &light)
 {
-    MooModel model = mesh_material_to_model(light_cube(get_coordinate_matrix(light.light_direction, vec3(0.f, 1.f, 0.f)), light.light_position), MooMaterial(Light));
+    MooModel model = mesh_material_to_model(cube(), MooMaterial(LIGHT));
+    model.transform = mat4(eye3(), light.light_position) * mat4(0.01f);
 
     return model;
 }

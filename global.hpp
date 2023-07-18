@@ -15,6 +15,19 @@
 static inline float deg_to_rad(const float& deg) { return deg * PI / 180.f; }
 static inline float rad_to_deg(const float& rad) { return rad / PI * 180.f; }
 
+static inline float sgn(float x)
+{
+    if(x > 0.f)
+    {
+        return 1.f;
+    }
+    else if(x < 0.f)
+    {
+        return - 1.f;
+    }
+    return 0.f;
+}
+
 static inline float clampf(float x, float min, float max)
 {
     if(x < min)

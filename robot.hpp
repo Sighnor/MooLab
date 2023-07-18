@@ -20,7 +20,7 @@ struct Robot
     array2d<unsigned short> bone_weights_ids;
 
     int nbones() const { return bone_rest_positions.size; }
-    void resize_bone(int bones_size)
+    void resize_bones(int bones_size)
     {
         bone_ids.resize(bones_size);
         bone_local_positions.resize(bones_size);
@@ -94,34 +94,34 @@ void slice1d_set(slice1d<T> slice, std::vector<T> input)
     }
 }
 
-float compute_val(slice1d<vec3> bone_anim_positions1, slice1d<vec3> bone_anim_positions2)
+float compute_val(const slice1d<vec3> bone_anim_positions0, const slice1d<vec3> bone_anim_positions1)
 {
-    assert(bone_anim_positions1.size == bone_anim_positions2.size);
+    assert(bone_anim_positions0.size == bone_anim_positions1.size);
     float val = 0;
-    for(int i = 0; i < bone_anim_positions1.size; i++)
+    for(int i = 0; i < bone_anim_positions0.size; i++)
     {
-        val += length(bone_anim_positions1(i) - bone_anim_positions2(i));
+        val += length(bone_anim_positions0(i) - bone_anim_positions1(i));
     }
-    val = val / bone_anim_positions1.size;
+    val = val / bone_anim_positions0.size;
 
     return val;
 }
 
 void robot_evaluate(
-    slice1d<float> rotations,
+    const slice1d<float> rotations,
     slice1d<float> positions)
 {
-    positions(0) = 0.f;
-    positions(1) = rotations(0);
-    positions(2) = 0.f;
-    positions(3) = rotations(1);
-    positions(4) = 0.f;
-    positions(5) = rotations(2);
-    positions(6) = 0.f;
+    positions(0) = 0.2f * rotations(0);
+    positions(1) = 0.7f * rotations(0);
+    positions(2) = 0.1f * rotations(0) + 0.2f * rotations(1);
+    positions(3) = 0.7f * rotations(1);
+    positions(4) = 0.1f * rotations(1) + 0.2f * rotations(2);
+    positions(5) = 0.7f * rotations(2);
+    positions(6) = 0.1f * rotations(2);
     positions(7) = rotations(3);
 }
 
-void transform_positions(slice1d<float> trans_positions, slice1d<float> positions)
+void transform_positions(const slice1d<float> positions, slice1d<float> trans_positions)
 {
     assert(positions.size == 8);
     trans_positions(0) = rad_to_deg(positions(7));
@@ -133,15 +133,15 @@ void transform_positions(slice1d<float> trans_positions, slice1d<float> position
     trans_positions(9) = 0.f;
 }
 
-void transform_quaternions(slice1d<quat> trans_quaternions, slice1d<quat> quaternions)
+void transform_quaternions(const slice1d<quat> quaternions, slice1d<quat> trans_quaternions)
 {
     assert(quaternions.size == 7);
     trans_quaternions(0) = quat(1.f, 0.f, 0.f, 0.f);
-    trans_quaternions(1) = quat(1.f, 0.f, 0.f, 0.f);
     for(int i = 0; i < 7; i++)
     {
-        trans_quaternions(i + 2) = quaternions(i);
+        trans_quaternions(i + 1) = quaternions(i);
     }
+    trans_quaternions(8) = quat(1.f, 0.f, 0.f, 0.f);
     trans_quaternions(9) = quat(1.f, 0.f, 0.f, 0.f);
 }
 
@@ -149,14 +149,14 @@ void robot_forward_kinematics_positions(
     const Robot &robot,
     slice1d<vec3> bone_anim_positions, 
     slice1d<quat> bone_anim_rotations,
-    slice1d<float> positions)
+    const slice1d<float> positions)
 {
     bone_anim_positions.zero();
     bone_anim_rotations.zero();
 
     array1d<float> trans_positions(10);
 
-    transform_positions(trans_positions, positions);
+    transform_positions(positions, trans_positions);
 
     for(int i = 0; i < robot.nbones(); i++)
     {
@@ -183,14 +183,14 @@ void robot_forward_kinematics_quaternions(
     const Robot &robot,
     slice1d<vec3> bone_anim_positions, 
     slice1d<quat> bone_anim_rotations,
-    slice1d<quat> quaternions)
+    const slice1d<quat> quaternions)
 {
     bone_anim_positions.zero();
     bone_anim_rotations.zero();
 
     array1d<quat> trans_quaternions(10);
 
-    transform_quaternions(trans_quaternions, quaternions);
+    transform_quaternions(quaternions, trans_quaternions);
 
     for(int i = 0; i < robot.nbones(); i++)
     {
@@ -260,7 +260,7 @@ Robot create_robot(float r, float h, int r_size, int h_size, int bones_size, flo
 {
     Robot robot;
 
-    robot.resize_bone(bones_size);
+    robot.resize_bones(bones_size);
 
     for(int i = 0; i < bones_size; i++)
     {
@@ -309,7 +309,7 @@ Robot create_robot(float r, float h, int r_size, int h_size, int bones_size, flo
             float k = float(i) / h_size;
             robot.all_rest_positions(id) = vec3(r * sin(phi), h * k, r * cos(phi));
             robot.all_rest_normals(id) = normalize(vec3(sin(phi), 0.f, cos(phi)));
-            robot.texcoords(id) = vec2(phi / 2.f / PI, k);
+            robot.texcoords(id) = vec2(1.f - k, phi / 2.f / PI);
 
             std::map<int, float> distances;
             

@@ -38,7 +38,7 @@ void Database_save(Database &db, const char* file_name)
     fclose(f);
 }
 
-void Database_sort(Database &db, array2d<vec3> features)
+void Database_sort(Database &db, const slice2d<vec3> features)
 {
     db.features.resize(features.rows, features.cols);
     for(int i = 0; i < db.nframes(); i++)
@@ -98,7 +98,7 @@ int Database_search(
             }
         }
     }
-    std::cout << best_delta_toe << ',' << best_frame << std::endl;
+    // std::cout << best_delta_toe << ',' << best_frame << std::endl;
     return best_frame;
 }
 
