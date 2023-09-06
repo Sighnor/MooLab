@@ -101,8 +101,8 @@ BVH_Motion motion_sub_sequence(const BVH_Motion &motion, int begin, int end)
 
     res.bone_ids = motion.bone_ids;
     res.bone_parents = motion.bone_parents;
-    res.bone_local_positions = array2d__sub_sequence(motion.bone_local_positions, begin, end);
-    res.bone_local_rotations = array2d__sub_sequence(motion.bone_local_rotations, begin, end);
+    res.bone_local_positions = array2d_sub_sequence(motion.bone_local_positions, begin, end);
+    res.bone_local_rotations = array2d_sub_sequence(motion.bone_local_rotations, begin, end);
 
     return res;
 }
@@ -113,8 +113,8 @@ BVH_Motion motion_concatenate(const BVH_Motion &motion1, const BVH_Motion &motio
 
     res.bone_ids = motion1.bone_ids;
     res.bone_parents = motion1.bone_parents;
-    res.bone_local_positions = array2d__concatenate(motion1.bone_local_positions, motion2.bone_local_positions);
-    res.bone_local_rotations = array2d__concatenate(motion1.bone_local_rotations, motion2.bone_local_rotations);
+    res.bone_local_positions = array2d_concatenate(motion1.bone_local_positions, motion2.bone_local_positions);
+    res.bone_local_rotations = array2d_concatenate(motion1.bone_local_rotations, motion2.bone_local_rotations);
 
     return res;
 }

@@ -248,19 +248,121 @@ void draw_point(vec3 point, MooCamera &camera, FBO *fbo, vec3 color)
     vec4 p = standardize(projection_matrix * view_matrix * pos_to_vec4(point));
 
     int x = 0.5f * fbo->cols * (1.f + p.x);
-    int y = 0.5f * fbo->rows * (1.f + p.y);
+    int y = fbo->rows - 1 - 0.5f * fbo->rows * (1.f + p.y);
 
-    int fbo_x = x;
-    int fbo_y = fbo->rows - 1 - y;
-
-    if(fbo_y >= 0 && fbo_y <= fbo->rows - 1 && fbo_x >= 0 && fbo_x <= fbo->cols - 1)
+    if(y >= 0 && y <= fbo->rows - 1 && x >= 0 && x <= fbo->cols - 1)
     {
-        for(int i = std::max(fbo_x - 2, 0); i < std::min(fbo_x + 3, fbo->cols - 1); i++)
+        for(int i = std::max(x - 2, 0); i < std::min(x + 3, fbo->cols - 1); i++)
         {
-            for(int j = std::max(fbo_y - 2, 0); j < std::min(fbo_y + 3, fbo->rows - 1); j++)
+            for(int j = std::max(y - 2, 0); j < std::min(y + 3, fbo->rows - 1); j++)
             {
                 fbo->getcolor(j, i) = clampv(color);
             }
+        }
+    }
+}
+
+// Bresenham's line drawing algorithm
+// Code taken from a stack overflow answer: https://stackoverflow.com/a/16405254
+void draw_line(vec3 begin, vec3 end, MooCamera &camera, FBO *fbo, vec3 color)
+{
+    mat4 view_matrix = camera.get_view_matrix();
+    mat4 projection_matrix = camera.get_projection_matrix();
+    vec4 v0 = view_matrix * pos_to_vec4(begin);
+    vec4 v1 = view_matrix * pos_to_vec4(end);
+    if(- v0.z < camera.z_near || - v1.z < camera.z_near)
+    {
+        return;
+    }
+    vec4 p0 = standardize(projection_matrix * view_matrix * pos_to_vec4(begin));
+    vec4 p1 = standardize(projection_matrix * view_matrix * pos_to_vec4(end));
+
+    float x0 = 0.5f * fbo->cols * (1.f + p0.x);
+    float y0 = fbo->rows - 1 - 0.5f * fbo->rows * (1.f + p0.y);
+    float x1 = 0.5f * fbo->cols * (1.f + p1.x);
+    float y1 = fbo->rows - 1 - 0.5f * fbo->rows * (1.f + p1.y);
+
+    int x, y, dx, dy, dx0, dy0, px, py, xe, ye, i;
+
+    dx = x1 - x0;
+    dy = y1 - y0;
+    dx0 = fabs(dx);
+    dy0 = fabs(dy);
+    px = 2 * dy0 - dx0;
+    py = 2 * dx0 - dy0;
+
+    if(dy0 <= dx0)
+    {
+        if(dx >= 0)
+        {
+            x = x0;
+            y = y0;
+            xe = x1;
+        }
+        else
+        {
+            x = x1;
+            y = y1;
+            xe = x0;
+        }
+        fbo->getcolor(y, x) = clampv(color);
+        for(i = 0; x < xe; i++)
+        {
+            x = x + 1;
+            if(px < 0)
+            {
+                px = px + 2 * dy0;
+            }
+            else
+            {
+                if((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+                {
+                    y = y + 1;
+                }
+                else
+                {
+                    y = y - 1;
+                }
+                px = px + 2 * (dy0 - dx0);
+            }
+            fbo->getcolor(y, x) = clampv(color);
+        }
+    }
+    else
+    {
+        if(dy >= 0)
+        {
+            x = x0;
+            y = y0;
+            ye = y1;
+        }
+        else
+        {
+            x = x1;
+            y = y1;
+            ye = y0;
+        }
+        fbo->getcolor(y, x) = clampv(color);
+        for(i = 0; y < ye; i++)
+        {
+            y = y + 1;
+            if(py <= 0)
+            {
+                py = py + 2 * dx0;
+            }
+            else
+            {
+                if((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+                {
+                    x = x + 1;
+                }
+                else
+                {
+                    x = x - 1;
+                }
+                py = py + 2 * (dx0 - dy0);
+            }
+            fbo->getcolor(y, x) = clampv(color);
         }
     }
 }

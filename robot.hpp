@@ -7,6 +7,7 @@ struct Robot
 {
     array1d<int> bone_ids;
     array1d<vec3> bone_local_positions;
+    array1d<quat> bone_local_rotations;
     array1d<vec3> bone_rest_positions;
     array1d<quat> bone_rest_rotations;
     array1d<int> bone_parents;
@@ -24,6 +25,7 @@ struct Robot
     {
         bone_ids.resize(bones_size);
         bone_local_positions.resize(bones_size);
+        bone_local_rotations.resize(bones_size);
         bone_rest_positions.resize(bones_size);
         bone_rest_rotations.resize(bones_size);
         bone_parents.resize(bones_size);
@@ -47,6 +49,7 @@ void robot_load(Robot& robot, const char* filename)
 
     array1d_read(robot.bone_ids, f);
     array1d_read(robot.bone_local_positions, f);
+    array1d_read(robot.bone_local_rotations, f);
     array1d_read(robot.bone_rest_positions, f);
     array1d_read(robot.bone_rest_rotations, f);
     array1d_read(robot.bone_parents, f);
@@ -69,6 +72,7 @@ void robot_save(Robot& robot, const char* filename)
 
     array1d_write(robot.bone_ids, f);
     array1d_write(robot.bone_local_positions, f);
+    array1d_write(robot.bone_local_rotations, f);
     array1d_write(robot.bone_rest_positions, f);
     array1d_write(robot.bone_rest_rotations, f);
     array1d_write(robot.bone_parents, f);
@@ -111,38 +115,45 @@ void robot_evaluate(
     const slice1d<float> rotations,
     slice1d<float> positions)
 {
-    positions(0) = 0.2f * rotations(0);
-    positions(1) = 0.7f * rotations(0);
-    positions(2) = 0.1f * rotations(0) + 0.2f * rotations(1);
-    positions(3) = 0.7f * rotations(1);
-    positions(4) = 0.1f * rotations(1) + 0.2f * rotations(2);
-    positions(5) = 0.7f * rotations(2);
-    positions(6) = 0.1f * rotations(2);
-    positions(7) = rotations(3);
+    positions(0) = rad_to_deg(rotations(0));
+    positions(1) = rad_to_deg(0.f);
+    positions(2) = rad_to_deg(0.2f * rotations(1));
+    positions(3) = rad_to_deg(0.7f * rotations(1));
+    positions(4) = rad_to_deg(0.1f * rotations(1) + 0.2f * rotations(2));
+    positions(5) = rad_to_deg(0.7f * rotations(2));
+    positions(6) = rad_to_deg(0.1f * rotations(2) + 0.2f * rotations(3));
+    positions(7) = rad_to_deg(0.7f * rotations(3));
+    positions(8) = rad_to_deg(0.1f * rotations(3));
+    positions(9) = rad_to_deg(0.f);
 }
 
-void transform_positions(const slice1d<float> positions, slice1d<float> trans_positions)
+void robot_forward_kinematics_full(
+    const Robot &robot,
+    slice1d<vec3> bone_anim_positions, 
+    slice1d<quat> bone_anim_rotations)
 {
-    assert(positions.size == 8);
-    trans_positions(0) = rad_to_deg(positions(7));
-    trans_positions(1) = 0.f;
-    for(int i = 0; i < 7; i++)
-    {
-        trans_positions(i + 2) = rad_to_deg(positions(i));
-    }
-    trans_positions(9) = 0.f;
-}
+    bone_anim_positions.zero();
+    bone_anim_rotations.zero();
 
-void transform_quaternions(const slice1d<quat> quaternions, slice1d<quat> trans_quaternions)
-{
-    assert(quaternions.size == 7);
-    trans_quaternions(0) = quat(1.f, 0.f, 0.f, 0.f);
-    for(int i = 0; i < 7; i++)
+    for(int i = 0; i < robot.nbones(); i++)
     {
-        trans_quaternions(i + 1) = quaternions(i);
+        // Assumes bones are always sorted from root onwards
+        int parent_id = robot.bone_parents(i);
+
+        if(parent_id == -1)
+        {
+            bone_anim_rotations(i) = robot.bone_local_rotations(i);
+            bone_anim_positions(i) = robot.bone_local_positions(i);
+        }
+        else
+        {
+            bone_anim_rotations(i) = 
+                bone_anim_rotations(parent_id) * robot.bone_local_rotations(i);
+            bone_anim_positions(i) = 
+                bone_anim_positions(parent_id) + 
+                bone_anim_rotations(parent_id) * robot.bone_local_positions(i);
+        }
     }
-    trans_quaternions(8) = quat(1.f, 0.f, 0.f, 0.f);
-    trans_quaternions(9) = quat(1.f, 0.f, 0.f, 0.f);
 }
 
 void robot_forward_kinematics_positions(
@@ -154,10 +165,6 @@ void robot_forward_kinematics_positions(
     bone_anim_positions.zero();
     bone_anim_rotations.zero();
 
-    array1d<float> trans_positions(10);
-
-    transform_positions(positions, trans_positions);
-
     for(int i = 0; i < robot.nbones(); i++)
     {
         // Assumes bones are always sorted from root onwards
@@ -165,13 +172,13 @@ void robot_forward_kinematics_positions(
 
         if(parent_id == -1)
         {
-            bone_anim_rotations(i) = quat(trans_positions(i), vec3(0.f, 1.f, 0.f));
+            bone_anim_rotations(i) = quat(positions(i), vec3(0.f, 1.f, 0.f));
             bone_anim_positions(i) = robot.bone_local_positions(i);
         }
         else
         {
             bone_anim_rotations(i) = 
-                bone_anim_rotations(parent_id) * quat(trans_positions(i), vec3(1.f, 0.f, 0.f));
+                bone_anim_rotations(parent_id) * quat(positions(i), vec3(1.f, 0.f, 0.f));
             bone_anim_positions(i) = 
                 bone_anim_positions(parent_id) + 
                 bone_anim_rotations(parent_id) * robot.bone_local_positions(i);
@@ -188,10 +195,6 @@ void robot_forward_kinematics_quaternions(
     bone_anim_positions.zero();
     bone_anim_rotations.zero();
 
-    array1d<quat> trans_quaternions(10);
-
-    transform_quaternions(quaternions, trans_quaternions);
-
     for(int i = 0; i < robot.nbones(); i++)
     {
         // Assumes bones are always sorted from root onwards
@@ -199,13 +202,13 @@ void robot_forward_kinematics_quaternions(
 
         if(parent_id == -1)
         {
-            bone_anim_rotations(i) = trans_quaternions(i);
+            bone_anim_rotations(i) = quaternions(i);
             bone_anim_positions(i) = robot.bone_local_positions(i);
         }
         else
         {
             bone_anim_rotations(i) = 
-                bone_anim_rotations(parent_id) * trans_quaternions(i);
+                bone_anim_rotations(parent_id) * quaternions(i);
             bone_anim_positions(i) = 
                 bone_anim_positions(parent_id) + 
                 bone_anim_rotations(parent_id) * robot.bone_local_positions(i);
@@ -266,11 +269,13 @@ Robot create_robot(float r, float h, int r_size, int h_size, int bones_size, flo
     {
         robot.bone_ids(i) = i;
         robot.bone_local_positions(i) = vec3(0.f, h / (bones_size - 1), 0.f);
+        robot.bone_local_rotations(i) = quat(1.f, 0.f, 0.f, 0.f);
         robot.bone_rest_positions(i) = vec3(0.f, h * i / (bones_size - 1), 0.f);
         robot.bone_rest_rotations(i) = quat(1.f, 0.f, 0.f, 0.f);
         robot.bone_parents(i) = i - 1;
     }
     robot.bone_local_positions(0) = vec3(0.f);
+    robot.bone_local_rotations(0) = quat(1.f, 0.f, 0.f, 0.f);
 
     int triangles_size = 2 * r_size + 2 * h_size * r_size;
     int vertices_size = 2 + (h_size + 1) * r_size;

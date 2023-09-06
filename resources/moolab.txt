@@ -239,9 +239,9 @@ int main(int argc, char** argv)
                                     0.1 * N), 
                                 N,
                                 N + 1.5 * N);
-            // array2d_set_by_cols(active_motion.bone_local_rotations, sh_curve_quaternions, Bone_RightArm);
-            // array2d_set_by_cols(active_motion.bone_local_rotations, el_curve_quaternions, Bone_RightForeArm);
-            // array2d_set_by_cols(active_motion.bone_local_rotations, wr_curve_quaternions, Bone_RightHand);
+            array2d_set_by_cols(active_motion.bone_local_rotations, sh_curve_quaternions, Bone_RightArm);
+            array2d_set_by_cols(active_motion.bone_local_rotations, el_curve_quaternions, Bone_RightForeArm);
+            array2d_set_by_cols(active_motion.bone_local_rotations, wr_curve_quaternions, Bone_RightHand);
         }
 
         output0.set(vec3(100.f, 100.f, 200.f), 100.f);

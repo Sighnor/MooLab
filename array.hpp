@@ -167,7 +167,7 @@ void array2d_read(array2d<T>& arr, FILE* f)
 }
 
 template<typename T>
-void array2d__set_by_rows(array2d<T>& arr, const array1d<T>& res, int row_id)
+void array2d_set_by_rows(array2d<T>& arr, const array1d<T>& res, int row_id)
 {
     assert(arr.cols == res.size);
     for(int i = 0; i < res.size; i++)
@@ -177,7 +177,7 @@ void array2d__set_by_rows(array2d<T>& arr, const array1d<T>& res, int row_id)
 }
 
 template<typename T>
-void array2d__set_by_cols(array2d<T>& arr, const array1d<T>& res, int col_id)
+void array2d_set_by_cols(array2d<T>& arr, const array1d<T>& res, int col_id)
 {
     assert(arr.rows == res.size);
     for(int i = 0; i < res.size; i++)
@@ -187,7 +187,7 @@ void array2d__set_by_cols(array2d<T>& arr, const array1d<T>& res, int col_id)
 }
 
 template<typename T>
-array2d<T> array2d__sub_sequence(const array2d<T>& arr, int begin, int end)
+array2d<T> array2d_sub_sequence(const array2d<T>& arr, int begin, int end)
 {
     array2d<T> res;
     res.resize(end - begin, arr.cols);
@@ -197,7 +197,7 @@ array2d<T> array2d__sub_sequence(const array2d<T>& arr, int begin, int end)
 }
 
 template<typename T>
-array2d<T> array2d__concatenate(const array2d<T>& arr1, const array2d<T>& arr2)
+array2d<T> array2d_concatenate(const array2d<T>& arr1, const array2d<T>& arr2)
 {
     array2d<T> res;
     res.resize(arr1.rows + arr2.rows, arr1.cols);
