@@ -158,7 +158,7 @@ static inline quat slerp(quat q1, quat q2, float alpha)
     float scale2;
     float dot_q1q2 = dot(q1, q2);
 
-    float phi = acos(abs(dot_q1q2));
+    float phi = acos(clampf(abs(dot_q1q2), -1.f, 1.f));
 
     if(phi < 1e-4f)
     {
@@ -189,7 +189,7 @@ static inline vec3 quat_to_avel(quat last, quat curr, float dt = 0.0166667f)
     }
     else
     {
-        float theta = 2.f * acos(diff.w);
+        float theta = 2.f * acos(clampf(diff.w, -1.f, 1.f));
         scale = theta / sin(theta / 2.f) / dt;
     }
     return scale * vec3(diff.x, diff.y, diff.z);

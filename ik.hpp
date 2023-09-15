@@ -4,6 +4,104 @@
 #include "array.hpp"
 #include "quat.hpp"
 
+void IK_two_bones(
+    vec3 &bone0_anim_position, 
+    vec3 &bone1_anim_position, 
+    vec3 &bone2_anim_position,
+    quat &bone0_anim_rotation, 
+    quat &bone1_anim_rotation, 
+    quat &bone2_anim_rotation, 
+    vec3 target_position)
+{
+    vec3 ab = bone1_anim_position - bone0_anim_position;
+    vec3 bc = bone2_anim_position - bone1_anim_position;
+    vec3 ac = bone2_anim_position - bone0_anim_position;
+    vec3 at = target_position - bone0_anim_position;
+
+    float l_ab = length(ab);
+    float l_bc = length(bc);
+    float l_ac = length(ac);
+    float l_at = length(at);
+
+    vec3 axis0 = normalize(cross(ac, ab));
+    vec3 axis1 = normalize(cross(bc, ab));
+    vec3 axis2 = normalize(cross(ac, at));
+
+    float theta_a0 = acos(clampf((l_ab * l_ab + l_ac * l_ac - l_bc * l_bc) / (2.f * l_ab * l_ac), -1.f, 1.f));
+    float theta_a1 = acos(clampf((l_ab * l_ab + l_at * l_at - l_bc * l_bc) / (2.f * l_ab * l_at), -1.f, 1.f));
+    float theta_b0 = acos(clampf((l_ab * l_ab + l_bc * l_bc - l_ac * l_ac) / (2.f * l_ab * l_bc), -1.f, 1.f));
+    float theta_b1 = acos(clampf((l_ab * l_ab + l_bc * l_bc - l_at * l_at) / (2.f * l_ab * l_bc), -1.f, 1.f));
+    float theta_t = acos(clampf(dot(ac, at) / (l_ac * l_at), -1.f, 1.f));
+
+    quat R0 = quat(rad_to_deg(theta_a1 - theta_a0), axis0);
+    quat R1 = quat(rad_to_deg(theta_b1 - theta_b0), axis1);
+    quat R2 = quat(rad_to_deg(theta_t), axis2);
+
+    vec3 offset01 = inv_quat(bone0_anim_rotation) * (bone1_anim_position - bone0_anim_position);
+    vec3 offset12 = inv_quat(bone1_anim_rotation) * (bone2_anim_position - bone1_anim_position);
+    quat rotation01 = inv_quat(bone0_anim_rotation) * bone1_anim_rotation;
+    quat rotation12 = inv_quat(bone1_anim_rotation) * bone2_anim_rotation;
+
+    bone0_anim_position = bone0_anim_position;
+    bone0_anim_rotation = R0 * R2 * bone0_anim_rotation;
+    bone1_anim_position = bone0_anim_position + bone0_anim_rotation * offset01;
+    bone1_anim_rotation = R1 * bone0_anim_rotation * rotation01;
+    bone2_anim_position = bone1_anim_position + bone1_anim_rotation * offset12;
+    bone2_anim_rotation = bone1_anim_rotation * rotation12;
+}
+
+void IK_two_bones(
+    vec3 &bone0_anim_position, 
+    vec3 &bone1_anim_position, 
+    vec3 &bone2_anim_position,
+    vec3 &bone3_anim_position,
+    quat &bone0_anim_rotation, 
+    quat &bone1_anim_rotation, 
+    quat &bone2_anim_rotation, 
+    quat &bone3_anim_rotation, 
+    vec3 target_position)
+{
+    vec3 ab = bone1_anim_position - bone0_anim_position;
+    vec3 bc = bone2_anim_position - bone1_anim_position;
+    vec3 ac = bone2_anim_position - bone0_anim_position;
+    vec3 at = target_position - bone0_anim_position;
+
+    float l_ab = length(ab);
+    float l_bc = length(bc);
+    float l_ac = length(ac);
+    float l_at = length(at);
+
+    vec3 axis0 = normalize(cross(ac, ab));
+    vec3 axis1 = normalize(cross(bc, ab));
+    vec3 axis2 = normalize(cross(ac, at));
+
+    float theta_a0 = acos(clampf((l_ab * l_ab + l_ac * l_ac - l_bc * l_bc) / (2.f * l_ab * l_ac), -1.f, 1.f));
+    float theta_a1 = acos(clampf((l_ab * l_ab + l_at * l_at - l_bc * l_bc) / (2.f * l_ab * l_at), -1.f, 1.f));
+    float theta_b0 = acos(clampf((l_ab * l_ab + l_bc * l_bc - l_ac * l_ac) / (2.f * l_ab * l_bc), -1.f, 1.f));
+    float theta_b1 = acos(clampf((l_ab * l_ab + l_bc * l_bc - l_at * l_at) / (2.f * l_ab * l_bc), -1.f, 1.f));
+    float theta_t = acos(clampf(dot(ac, at) / (l_ac * l_at), -1.f, 1.f));
+
+    quat R0 = quat(rad_to_deg(theta_a1 - theta_a0), axis0);
+    quat R1 = quat(rad_to_deg(theta_b1 - theta_b0), axis1);
+    quat R2 = quat(rad_to_deg(theta_t), axis2);
+
+    vec3 offset01 = inv_quat(bone0_anim_rotation) * (bone1_anim_position - bone0_anim_position);
+    vec3 offset12 = inv_quat(bone1_anim_rotation) * (bone2_anim_position - bone1_anim_position);
+    vec3 offset23 = inv_quat(bone2_anim_rotation) * (bone3_anim_position - bone2_anim_position);
+    quat rotation01 = inv_quat(bone0_anim_rotation) * bone1_anim_rotation;
+    quat rotation12 = inv_quat(bone1_anim_rotation) * bone2_anim_rotation;
+    quat rotation23 = inv_quat(bone2_anim_rotation) * bone3_anim_rotation;
+
+    bone0_anim_position = bone0_anim_position;
+    bone0_anim_rotation = R0 * R2 * bone0_anim_rotation;
+    bone1_anim_position = bone0_anim_position + bone0_anim_rotation * offset01;
+    bone1_anim_rotation = R1 * bone0_anim_rotation * rotation01;
+    bone2_anim_position = bone1_anim_position + bone1_anim_rotation * offset12;
+    bone2_anim_rotation = bone1_anim_rotation * rotation12;
+    bone3_anim_position = bone2_anim_position + bone2_anim_rotation * offset23;
+    bone3_anim_rotation = bone2_anim_rotation * rotation23;
+}
+
 void FABRIK_one_end(
     const slice1d<vec3> bone_local_positions, 
     slice1d<quat> bone_local_rotations, 
@@ -52,7 +150,7 @@ void FABRIK_one_end(
         vec3 v0 = normalize(bone_local_positions(i));
         vec3 v1 = normalize(bone_anim_positions(i) - bone_anim_positions(i - 1));
         vec3 axis = normalize(cross(v0, v1));
-        float phi = rad_to_deg(acos(dot(v0, v1)));
+        float phi = rad_to_deg(acos(clampf(dot(v0, v1), -1.f, 1.f)));
         bone_anim_rotations(i - 1) = quat(phi, axis);
     }
 
@@ -98,7 +196,7 @@ void FABRIK_one_end_constraints(
         {
             vec3 v1 = normalize(bone_anim_positions(i + 1) - bone_anim_positions(i + 2));
             vec3 v2 = normalize(bone_anim_positions(i) - bone_anim_positions(i + 1));
-            if(acos(dot(v1 ,v2)) > deg_to_rad(constraint_angle))
+            if(acos(clampf(dot(v1, v2), -1.f, 1.f)) > deg_to_rad(constraint_angle))
             {
                 vec3 axis = normalize(cross(v1, v2));
                 vec3 v3 = quat(constraint_angle, axis) * v1;
@@ -118,7 +216,7 @@ void FABRIK_one_end_constraints(
         {
             vec3 v1 = normalize(bone_anim_positions(i - 1) - bone_anim_positions(i - 2));
             vec3 v2 = normalize(bone_anim_positions(i) - bone_anim_positions(i - 1));
-            if(acos(dot(v1 ,v2)) > deg_to_rad(constraint_angle))
+            if(acos(clampf(dot(v1, v2), -1.f, 1.f)) > deg_to_rad(constraint_angle))
             {
                 vec3 axis = normalize(cross(v1, v2));
                 vec3 v3 = quat(constraint_angle, axis) * v1;
@@ -138,7 +236,7 @@ void FABRIK_one_end_constraints(
         vec3 v0 = normalize(bone_local_positions(i));
         vec3 v1 = normalize(bone_anim_positions(i) - bone_anim_positions(i - 1));
         vec3 axis = normalize(cross(v0, v1));
-        float phi = rad_to_deg(acos(dot(v0, v1)));
+        float phi = rad_to_deg(acos(clampf(dot(v0, v1), -1.f, 1.f)));
         bone_anim_rotations(i - 1) = quat(phi, axis);
     }
 
@@ -205,7 +303,7 @@ void FABRIK_two_end(
         vec3 v0 = normalize(bone_local_positions(i));
         vec3 v1 = normalize(bone_anim_positions(i) - bone_anim_positions(i - 1));
         vec3 axis = normalize(cross(v0, v1));
-        float phi = rad_to_deg(acos(dot(v0, v1)));
+        float phi = rad_to_deg(acos(clampf(dot(v0, v1), -1.f, 1.f)));
         bone_anim_rotations(i - 1) = quat(phi, axis);
     }
 
@@ -253,7 +351,7 @@ void FABRIK_two_end_constraints(
         {
             vec3 v1 = normalize(bone_anim_positions(i + 1) - bone_anim_positions(i + 2));
             vec3 v2 = normalize(bone_anim_positions(i) - bone_anim_positions(i + 1));
-            if(acos(dot(v1 ,v2)) > deg_to_rad(constraint_angle))
+            if(acos(clampf(dot(v1, v2), -1.f, 1.f)) > deg_to_rad(constraint_angle))
             {
                 vec3 axis = normalize(cross(v1, v2));
                 vec3 v3 = quat(constraint_angle, axis) * v1;
@@ -270,7 +368,7 @@ void FABRIK_two_end_constraints(
         {
             vec3 v1 = normalize(bone_anim_positions(i + 1) - bone_anim_positions(i + 2));
             vec3 v2 = normalize(bone_anim_positions(i) - bone_anim_positions(i + 1));
-            if(acos(dot(v1 ,v2)) > deg_to_rad(constraint_angle))
+            if(acos(clampf(dot(v1, v2), -1.f, 1.f)) > deg_to_rad(constraint_angle))
             {
                 vec3 axis = normalize(cross(v1, v2));
                 vec3 v3 = quat(constraint_angle, axis) * v1;
@@ -290,7 +388,7 @@ void FABRIK_two_end_constraints(
         {
             vec3 v1 = normalize(bone_anim_positions(i - 1) - bone_anim_positions(i - 2));
             vec3 v2 = normalize(bone_anim_positions(i) - bone_anim_positions(i - 1));
-            if(acos(dot(v1 ,v2)) > deg_to_rad(constraint_angle))
+            if(acos(clampf(dot(v1, v2), -1.f, 1.f)) > deg_to_rad(constraint_angle))
             {
                 vec3 axis = normalize(cross(v1, v2));
                 vec3 v3 = quat(constraint_angle, axis) * v1;
@@ -310,7 +408,7 @@ void FABRIK_two_end_constraints(
         vec3 v0 = normalize(bone_local_positions(i));
         vec3 v1 = normalize(bone_anim_positions(i) - bone_anim_positions(i - 1));
         vec3 axis = normalize(cross(v0, v1));
-        float phi = rad_to_deg(acos(dot(v0, v1)));
+        float phi = rad_to_deg(acos(clampf(dot(v0, v1), -1.f, 1.f)));
         bone_anim_rotations(i - 1) = quat(phi, axis);
     }
 

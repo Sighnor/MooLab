@@ -181,7 +181,7 @@ static inline vec3 mix(vec3 F0, vec3 albedo, float matallic)
 static inline vec2 dir_to_sph(vec3 v)
 {
     vec3 dir = normalize(v);
-    float phi = acos(dir.y);
+    float phi = acos(clampf(dir.y, -1.f, 1.f));
     float theta = atan2(dir.x, dir.z);
 
     return vec2(theta, phi);

@@ -55,6 +55,7 @@ struct array1d
     
     void zero() { memset(data, 0, sizeof(T) * size); }
     void set(const T& x) { for(int i = 0; i < size; i++) { data[i] = x; } }
+    slice1d<T> slice() { return slice1d<T>(size, data); }
     
     void resize(int _size)
     {
@@ -116,6 +117,7 @@ struct array2d
 
     void zero() { memset(data, 0, sizeof(T) * rows * cols); }
     void set(const T& x) { for(int i = 0; i < rows * cols; i++) { data[i] = x; } }
+    slice2d<T> slice() { return slice2d<T>(rows, cols, data); }
 
     void resize(int _rows, int _cols)
     {

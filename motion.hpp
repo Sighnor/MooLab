@@ -352,7 +352,7 @@ BVH_Motion concatenate_two_motions(
     res1.bone_parents = motion1.bone_parents;
     res1.bone_local_positions = motion1.bone_local_positions;
     res1.bone_local_rotations = motion1.bone_local_rotations;
-    
+
     vec3 pos = res1.bone_local_positions(mix_frame, 0);
     quat rot = res1.bone_local_rotations(mix_frame, 0);
     vec3 facing_axis = rot * vec3(0, 0, 1);
@@ -360,7 +360,7 @@ BVH_Motion concatenate_two_motions(
     BVH_Motion res2 = translation_and_rotation(motion2, 0, pos, facing_axis);
 
     BVH_Motion mix_motion0 = motion_sub_sequence(res1, 0, mix_frame);
-    BVH_Motion mix_motion1 = motion_sub_sequence(res1, mix_frame, mix_frame + 1);
+    BVH_Motion mix_motion1 = motion_sub_sequence(res1, mix_frame, mix_frame + mix_time);
     BVH_Motion mix_motion2 = motion_sub_sequence(res2, 0, mix_time);
     BVH_Motion mix_motion3 = motion_sub_sequence(res2, mix_time, motion2.nframes());
 

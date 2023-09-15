@@ -178,7 +178,6 @@ void rasterizer(MooShader &shader, FBO *fbo, bool ifdraw)
                                 vec3 color;
                                 color = 255.f * shader.pbr_shader(frag);
                                 fbo->getcolor(fbo_y, fbo_x) = clampv(color);
-                                // fbo->getcolor(fbo_y, fbo_x) = clampv(255.f * 0.5f);
                                 // fbo->getcolor(fbo_y, fbo_x) = 255.f * fbo->getdepth(fbo_y, fbo_x);
                                 break;
                             }
@@ -189,6 +188,7 @@ void rasterizer(MooShader &shader, FBO *fbo, bool ifdraw)
                                 vec3 color;
                                 color = 255.f * shader.texture_shader(frag);
                                 fbo->getcolor(fbo_y, fbo_x) = clampv(color);
+                                break;
                             }
                             case NORMALS:
                             {
@@ -197,6 +197,7 @@ void rasterizer(MooShader &shader, FBO *fbo, bool ifdraw)
                                 vec3 color;
                                 color = 255.f * shader.normal_shader(frag);
                                 fbo->getcolor(fbo_y, fbo_x) = clampv(color);
+                                break;
                             }
                             default:
                                 break;
@@ -236,7 +237,7 @@ void draw(MooModel *model, MooCamera &camera, FBO *fbo, updated_paramters *par, 
     }
 }
 
-void draw_point(vec3 point, MooCamera &camera, FBO *fbo, vec3 color)
+void draw_point(vec3 point, MooCamera &camera, FBO *fbo, vec3 color, int size = 2)
 {
     mat4 view_matrix = camera.get_view_matrix();
     mat4 projection_matrix = camera.get_projection_matrix();
@@ -252,9 +253,9 @@ void draw_point(vec3 point, MooCamera &camera, FBO *fbo, vec3 color)
 
     if(y >= 0 && y <= fbo->rows - 1 && x >= 0 && x <= fbo->cols - 1)
     {
-        for(int i = std::max(x - 2, 0); i < std::min(x + 3, fbo->cols - 1); i++)
+        for(int i = std::max(x - size, 0); i <= std::min(x + size, fbo->cols - 1); i++)
         {
-            for(int j = std::max(y - 2, 0); j < std::min(y + 3, fbo->rows - 1); j++)
+            for(int j = std::max(y - size, 0); j <= std::min(y + size, fbo->rows - 1); j++)
             {
                 fbo->getcolor(j, i) = clampv(color);
             }
@@ -277,10 +278,13 @@ void draw_line(vec3 begin, vec3 end, MooCamera &camera, FBO *fbo, vec3 color)
     vec4 p0 = standardize(projection_matrix * view_matrix * pos_to_vec4(begin));
     vec4 p1 = standardize(projection_matrix * view_matrix * pos_to_vec4(end));
 
-    float x0 = 0.5f * fbo->cols * (1.f + p0.x);
-    float y0 = fbo->rows - 1 - 0.5f * fbo->rows * (1.f + p0.y);
-    float x1 = 0.5f * fbo->cols * (1.f + p1.x);
-    float y1 = fbo->rows - 1 - 0.5f * fbo->rows * (1.f + p1.y);
+    int x0 = clampf(0.5f * fbo->cols * (1.f + p0.x), 0, fbo->cols - 1);
+    int y0 = clampf(fbo->rows - 1 - 0.5f * fbo->rows * (1.f + p0.y), 0, fbo->rows - 1);
+    int x1 = clampf(0.5f * fbo->cols * (1.f + p1.x), 0, fbo->cols - 1);
+    int y1 = clampf(fbo->rows - 1 - 0.5f * fbo->rows * (1.f + p1.y), 0, fbo->rows - 1);
+
+    fbo->getcolor(y0, x0) = clampv(color);
+    fbo->getcolor(y1, x1) = clampv(color);
 
     int x, y, dx, dy, dx0, dy0, px, py, xe, ye, i;
 
@@ -365,6 +369,58 @@ void draw_line(vec3 begin, vec3 end, MooCamera &camera, FBO *fbo, vec3 color)
             fbo->getcolor(y, x) = clampv(color);
         }
     }
+}
+
+void draw_curve(vec3 pos0, vec3 vel0, vec3 vel5, MooCamera &camera, FBO *fbo, vec3 color, int N, float dt = 0.0166667f)
+{
+    vec3 pos1 = pos0 + ((vel5 - vel0) / 2.f * 0.2f * 0.2f + vel0 * 0.2f) * N * dt;
+    vec3 pos2 = pos0 + ((vel5 - vel0) / 2.f * 0.4f * 0.4f + vel0 * 0.4f) * N * dt;
+    vec3 pos3 = pos0 + ((vel5 - vel0) / 2.f * 0.6f * 0.6f + vel0 * 0.6f) * N * dt;
+    vec3 pos4 = pos0 + ((vel5 - vel0) / 2.f * 0.8f * 0.8f + vel0 * 0.8f) * N * dt;
+    vec3 pos5 = pos0 + ((vel5 - vel0) / 2.f * 1.0f * 1.0f + vel0 * 1.0f) * N * dt;
+
+    // mat4 view_matrix = camera.get_view_matrix();
+    // mat4 projection_matrix = camera.get_projection_matrix();
+    // vec4 v0 = view_matrix * pos_to_vec4(pos0);
+    // vec4 v1 = view_matrix * pos_to_vec4(pos1);
+    // vec4 v2 = view_matrix * pos_to_vec4(pos2);
+    // vec4 v3 = view_matrix * pos_to_vec4(pos3);
+    // vec4 v4 = view_matrix * pos_to_vec4(pos4);
+    // vec4 v5 = view_matrix * pos_to_vec4(pos5);
+
+    // if(- v0.z < camera.z_near || - v1.z < camera.z_near || 
+    //    - v2.z < camera.z_near || - v3.z < camera.z_near || 
+    //    - v4.z < camera.z_near || - v5.z < camera.z_near)
+    // {
+    //     return;
+    // }
+
+    // vec4 p0 = standardize(projection_matrix * view_matrix * pos_to_vec4(pos0));
+    // vec4 p1 = standardize(projection_matrix * view_matrix * pos_to_vec4(pos1));
+    // vec4 p2 = standardize(projection_matrix * view_matrix * pos_to_vec4(pos2));
+    // vec4 p3 = standardize(projection_matrix * view_matrix * pos_to_vec4(pos3));
+    // vec4 p4 = standardize(projection_matrix * view_matrix * pos_to_vec4(pos4));
+    // vec4 p5 = standardize(projection_matrix * view_matrix * pos_to_vec4(pos5));
+
+    array1d<vec3> points(5);
+    points(0) = pos0 + ((vel5 - vel0) / 2.f * 0.2f * 0.2f + vel0 * 0.2f) * N * dt;
+    points(1) = pos0 + ((vel5 - vel0) / 2.f * 0.4f * 0.4f + vel0 * 0.4f) * N * dt;
+    points(2) = pos0 + ((vel5 - vel0) / 2.f * 0.6f * 0.6f + vel0 * 0.6f) * N * dt;
+    points(3) = pos0 + ((vel5 - vel0) / 2.f * 0.8f * 0.8f + vel0 * 0.8f) * N * dt;
+    points(4) = pos0 + ((vel5 - vel0) / 2.f * 1.0f * 1.0f + vel0 * 1.0f) * N * dt;
+
+    array1d<vec3> curve_points = spine_curve(points.slice(), 0.05f);
+
+    for(int i = 0; i < curve_points.size; i++)
+    {
+        draw_point(curve_points(i), camera, fbo, color, 0);
+    }
+
+    // draw_line(pos0, pos1, camera, fbo, color);
+    // draw_line(pos1, pos2, camera, fbo, color);
+    // draw_line(pos2, pos3, camera, fbo, color);
+    // draw_line(pos3, pos4, camera, fbo, color);
+    // draw_line(pos4, pos5, camera, fbo, color);
 }
 
 #endif

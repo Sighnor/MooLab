@@ -5,9 +5,10 @@
 #include "global.hpp"
 #include "vec.hpp"
 
-vec2 recursive_bezier(const slice1d<vec2> points, float t) 
+template<typename T>
+T recursive_bezier(const slice1d<T> points, float t) 
 {
-    array1d<vec2> sub_points(points.size - 1);
+    array1d<T> sub_points(points.size - 1);
 
     if(points.size == 2)
     {
@@ -22,33 +23,35 @@ vec2 recursive_bezier(const slice1d<vec2> points, float t)
     return recursive_bezier(sub_points,t);
 }
 
-array1d<vec2> bezier_curve(const slice1d<vec2> points, int sample_num = 1000) 
+template<typename T>
+array1d<T> bezier_curve(const slice1d<T> points, int sample_num = 1000) 
 {
-    array1d<vec2> curve_points(sample_num + 1);
+    array1d<T> curve_points(sample_num + 1);
 
     for(float t = 0.f; t <= 1.f; t += 1.f / sample_num) 
     {
-        vec2 point = recursive_bezier(points, t);
+        T point = recursive_bezier(points, t);
         curve_points(t * sample_num) = point;
     }
 
     return curve_points;
 }
 
+template<typename T>
 void pid_control(
-        vec2 &x,
-        vec2 &vel,
-        vec2 &acc,
-        vec2 x_goal,
-        vec2 p_const, 
-        vec2 i_const, 
-        vec2 d_const, 
+        T &x,
+        T &vel,
+        T &acc,
+        T x_goal,
+        T p_const, 
+        T i_const, 
+        T d_const, 
         float k, 
         float dt)
 {
-    static vec2 ek_0 = vec2(0.f);
-    static vec2 ek_1 = vec2(0.f);
-    static vec2 ek_2 = vec2(0.f);
+    static T ek_0 = T(0.f);
+    static T ek_1 = T(0.f);
+    static T ek_2 = T(0.f);
 
     ek_2 = ek_1;
     ek_1 = ek_0;
@@ -59,29 +62,30 @@ void pid_control(
     x = x + vel * dt;
 }
 
-array1d<vec2> PID_curve(const slice1d<vec2> points, int sample_num = 300)
+template<typename T>
+array1d<T> PID_curve(const slice1d<T> points, int sample_num = 300)
 {
-    array1d<vec2> curve_points(sample_num + 1);
+    array1d<T> curve_points(sample_num + 1);
 
-    vec2 x = points(0);
-    vec2 vel = vec2(0.f);
-    vec2 acc = vec2(0.f);
+    T x = points(0);
+    T vel = T(0.f);
+    T acc = T(0.f);
 
     for(float t = 0; t < 1.f; t += 1.f / sample_num)
     {
         float i = t * (points.size - 1);
         int i0 = floor(i);
         int i1 = ceil(i);
-        vec2 point = lerp(points(i0), points(i1), i - i0);
+        T point = lerp(points(i0), points(i1), i - i0);
 
         pid_control(
             x,
             vel,
             acc,
             point,
-            vec2(1.f, 1.f), 
-            vec2(0.05f), 
-            vec2(0.2f), 
+            T(1.f), 
+            T(0.05f), 
+            T(0.2f), 
             200.f, 
             1.f / 60.f);
 
@@ -91,26 +95,28 @@ array1d<vec2> PID_curve(const slice1d<vec2> points, int sample_num = 300)
     return curve_points;
 }
 
+template<typename T>
 void cubic_spine_interpolation(
-        float &x,
-        const float &x0,
-        const float &x1,
-        const float &v0,
-        const float &v1,
+        T &x,
+        const T &x0,
+        const T &x1,
+        const T &v0,
+        const T &v1,
         float t)
 {
-    float a = 2 * x0 - 2 * x1 + v0 + v1;
-    float b = - 3 * x0 + 3 * x1 - 2 * v0 - v1;
-    float c = v0;
-    float d = x0;
+    T a = 2 * x0 - 2 * x1 + v0 + v1;
+    T b = - 3 * x0 + 3 * x1 - 2 * v0 - v1;
+    T c = v0;
+    T d = x0;
 
     x = a * t * t * t + b * t * t + c * t + d;
 }
 
-array1d<float> spine_curve(const slice1d<float> points, float mSampleTime = 0.05f)
+template<typename T>
+array1d<T> spine_curve(const slice1d<T> points, float mSampleTime = 0.05f)
 {
-    array1d<float> curve_points((points.size - 1) / mSampleTime + 1);
-    array1d<float> vec(points.size);
+    array1d<T> curve_points((points.size - 1) / mSampleTime + 1);
+    array1d<T> vec(points.size);
 
     vec(0) = points(1) - points(0);
     vec(points.size - 1) = points(points.size - 1) - points(points.size - 2);
@@ -127,7 +133,7 @@ array1d<float> spine_curve(const slice1d<float> points, float mSampleTime = 0.05
         int i0 = floor(i);
         int i1 = ceil(i);
 
-        float point;
+        T point;
 
         cubic_spine_interpolation(
             point, 
