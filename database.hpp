@@ -1,6 +1,7 @@
-#ifndef ENGINE_DATABASE
-#define ENGINE_DATABASE
+#ifndef MOOLAB_DATABASE
+#define MOOLAB_DATABASE
 
+#include "controller.hpp"
 #include "motion.hpp"
 
 struct Database
@@ -71,68 +72,49 @@ void Database_revise(Database &db, int dN = 10)
 }
 
 int Database_search(
-    Database &db, 
+    Database &db,
+    Character_Controller &cc, 
     int contact, 
-    vec3 vel0, 
-    vec3 avel0,
-    vec3 vel5, 
-    vec3 avel5, 
     vec3 ltoe, 
     vec3 rtoe, 
     int N = 50, 
-    int dN = 10)
+    int dN = 10, 
+    float weight_vel = 1.f, 
+    float weight_avel = 10.f, 
+    float weight_toe = 3.f)
 {
-    // vec3 vel1 = vel0 + 0.2f * vel5;
-    // vec3 vel2 = vel0 + 0.4f * vel5;
-    // vec3 vel3 = vel0 + 0.6f * vel5;
-    // vec3 vel4 = vel0 + 0.8f * vel5;
-
-    vec3 vel1 = vel5;
-    vec3 vel2 = vel5;
-    vec3 vel3 = vel5;
-    vec3 vel4 = vel5;
-
-    vec3 avel1 = avel5;
-    vec3 avel2 = avel5;
-    vec3 avel3 = avel5;
-    vec3 avel4 = avel5;
-
     int best_frame = 0;
     float best_delta = 10000.f;
     for (int i = 0; i < db.nframes() - 1.5 * N; i++)
     {
-        float delta_vel0_length = abs(length(vel0) / length(db.vels(i, 0)) - 1.f);
-        float delta_vel0_dir = dot(vel0, db.vels(i, 0)) / length(vel0) / length(db.vels(i, 0));
-        float delta_vel1_length = abs(length(vel1) / length(db.vels(i, 1)) - 1.f);
-        float delta_vel1_dir = dot(vel1, db.vels(i, 1)) / length(vel1) / length(db.vels(i, 1));
-        float delta_vel2_length = abs(length(vel2) / length(db.vels(i, 2)) - 1.f);
-        float delta_vel2_dir = dot(vel2, db.vels(i, 2)) / length(vel2) / length(db.vels(i, 2));
-        float delta_vel3_length = abs(length(vel3) / length(db.vels(i, 3)) - 1.f);
-        float delta_vel3_dir = dot(vel3, db.vels(i, 3)) / length(vel3) / length(db.vels(i, 3));
-        float delta_vel4_length = abs(length(vel4) / length(db.vels(i, 4)) - 1.f);
-        float delta_vel4_dir = dot(vel4, db.vels(i, 4)) / length(vel4) / length(db.vels(i, 4));
-        float delta_vel5_length = abs(length(vel5) / length(db.vels(i, 5)) - 1.f);
-        float delta_vel5_dir = dot(vel5, db.vels(i, 5)) / length(vel5) / length(db.vels(i, 5));
-
-        float delta_avel0 = abs(avel0.y - db.avels(i, 0).y);
-        float delta_avel1 = abs(avel1.y - db.avels(i, 1).y);
-        float delta_avel2 = abs(avel2.y - db.avels(i, 2).y);
-        float delta_avel3 = abs(avel3.y - db.avels(i, 3).y);
-        float delta_avel4 = abs(avel4.y - db.avels(i, 4).y);
-        float delta_avel5 = abs(avel5.y - db.avels(i, 5).y);
-
-        float delta_ltoe = length(ltoe - db.features(i, 0));
-        float delta_rtoe = length(rtoe - db.features(i, 1));
-
-        float delta_vel_dir = (1.f - delta_vel1_dir) + (1.f - delta_vel3_dir) + (1.f - delta_vel5_dir);
-        float delta_avel = delta_avel1 + delta_avel3 + delta_avel5;
-
         if(contact == db.contacts(i))
         {
-            float delta_vel_length = delta_vel1_length + delta_vel3_length + delta_vel5_length;// + delta_vel4_length + delta_vel5_length;
+            vec3 db_vel = (db.vels(i, 1) + db.vels(i, 2) + db.vels(i, 3) + db.vels(i, 4) + db.vels(i, 5)) / 5.f;
+            vec3 db_avel = (db.avels(i, 1) + db.avels(i, 2) + db.avels(i, 3) + db.avels(i, 4) + db.avels(i, 5)) / 5.f;
+
+            float delta_vel0 = length(cc.vel0) < 0.1f && length(db.vels(i, 0)) < 0.1f? 0.f : length(cc.vel0 - db.vels(i, 0)) / length(cc.vel0);
+            float delta_vel1 = length(cc.vel1) < 0.1f && length(db.vels(i, 1)) < 0.1f? 0.f : length(cc.vel1 - db.vels(i, 1)) / length(cc.vel1);
+            float delta_vel2 = length(cc.vel2) < 0.1f && length(db.vels(i, 2)) < 0.1f? 0.f : length(cc.vel2 - db.vels(i, 2)) / length(cc.vel2);
+            float delta_vel3 = length(cc.vel3) < 0.1f && length(db.vels(i, 3)) < 0.1f? 0.f : length(cc.vel3 - db.vels(i, 3)) / length(cc.vel3);
+            float delta_vel4 = length(cc.vel4) < 0.1f && length(db.vels(i, 4)) < 0.1f? 0.f : length(cc.vel4 - db.vels(i, 4)) / length(cc.vel4);
+            float delta_vel5 = length(cc.vel5) < 0.1f && length(db.vels(i, 5)) < 0.1f? 0.f : length(cc.vel5 - db.vels(i, 5)) / length(cc.vel5);
+
+            float delta_avel0 = abs(cc.avel0.y - db.avels(i, 0).y);
+            float delta_avel1 = abs(cc.avel1.y - db.avels(i, 1).y);
+            float delta_avel2 = abs(cc.avel2.y - db.avels(i, 2).y);
+            float delta_avel3 = abs(cc.avel3.y - db.avels(i, 3).y);
+            float delta_avel4 = abs(cc.avel4.y - db.avels(i, 4).y);
+            float delta_avel5 = abs(cc.avel5.y - db.avels(i, 5).y);
+
+            float delta_ltoe = length(ltoe - db.features(i, 0));
+            float delta_rtoe = length(rtoe - db.features(i, 1));
+
+            float delta_vel = delta_vel0 + delta_vel1 + delta_vel2 + delta_vel3 + delta_vel4 + delta_vel5;
+            float delta_avel = delta_avel0 + delta_avel1 + delta_avel2 + delta_avel3 + delta_avel4 + delta_avel5;
             float delta_toe = delta_ltoe + delta_rtoe;
 
-            float temp_delta = 5.f * delta_vel_dir + 1.f * delta_vel_length + 3.f * delta_toe + 10.f * delta_avel;
+            float temp_delta = weight_vel * delta_vel + weight_avel * delta_avel + weight_toe * delta_toe;
+
             if(temp_delta < best_delta)
             {
                 best_delta = temp_delta;

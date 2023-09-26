@@ -1,5 +1,5 @@
-#ifndef ENGINE_CURVE
-#define ENGINE_CURVE
+#ifndef MOOLAB_CURVE
+#define MOOLAB_CURVE
 
 #include "array.hpp"
 #include "global.hpp"

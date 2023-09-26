@@ -1,19 +1,9 @@
-#ifndef ENGINE_CONTROLLER
-#define ENGINE_CONTROLLER
+#ifndef MOOLAB_CONTROLLER
+#define MOOLAB_CONTROLLER
 
 #include "vec.hpp"
 
-enum Bait
-{
-    stand = 0,
-    walk  = 1,
-    run   = 2,
-    jump  = 3,
-    squat = 4,
-    roll  = 5
-};
-
-struct Controller
+struct Camera_Controller
 {
     vec3 *pos;
     vec3 vel;
@@ -23,8 +13,6 @@ struct Controller
     vec2 ang;
     vec2 ang_vel;
     vec2 ang_acc;
-
-    Bait bait;
 
     void pos_pid_control(
             float p_const, 
@@ -45,7 +33,7 @@ struct Controller
     void dir_gamepad_control(vec3 input, float k);
 };
 
-void Controller::pos_pid_control(
+void Camera_Controller::pos_pid_control(
                     float p_const, 
                     float i_const, 
                     float d_const, 
@@ -66,7 +54,7 @@ void Controller::pos_pid_control(
     *pos = *pos + vel * dt;
 }
 
-void Controller::dir_pid_control(
+void Camera_Controller::dir_pid_control(
                     float p_const, 
                     float i_const, 
                     float d_const, 
@@ -96,18 +84,72 @@ void Controller::dir_pid_control(
     *dir = sph_to_dir(ang);
 }
 
-void Controller::dir_gamepad_control(vec3 input, float k)
+void Camera_Controller::dir_gamepad_control(vec3 input, float k)
 {
     ang.x = circulate_float(ang.x - k * input.x, - PI, PI);
     ang.y = clampf(ang.y + k * input.z, PI / 2, PI - 0.1f);
     *dir = sph_to_dir(ang);
 }
 
-void bind_controller(Controller &c, vec3 *pos, vec3 *dir)
+void bind_controller(Camera_Controller &c, vec3 *pos, vec3 *dir)
 {
     c.pos = pos;
     c.dir = dir;
     c.ang = dir_to_sph(*dir);
+}
+
+enum Bait
+{
+    stand = 0,
+    walk  = 1,
+    run   = 2,
+    jump  = 3,
+    squat = 4,
+    roll  = 5
+};
+
+struct Character_Controller
+{
+    vec3 vel0;
+    vec3 vel1;
+    vec3 vel2;
+    vec3 vel3;
+    vec3 vel4;
+    vec3 vel5;
+
+    vec3 avel0;
+    vec3 avel1;
+    vec3 avel2;
+    vec3 avel3;
+    vec3 avel4;
+    vec3 avel5;
+
+    quat rotation0;
+
+    Bait bait;
+
+    void update(vec3 vel, vec3 avel, quat rotation);
+};
+
+void Character_Controller::update(vec3 vel, vec3 avel, quat rotation)
+{
+    vel0 = inv_quat(rotation) * rotation0 * vel5;
+    avel0 = inv_quat(rotation) * rotation0 * avel5;
+    // vel0 = vel5;
+    // avel0 = avel5;
+    vel5 = vel;
+    avel5 = avel;
+    rotation0 = rotation;
+
+    vel1 = 0.8f * vel0 + 0.2f * vel5;
+    vel2 = 0.6f * vel0 + 0.4f * vel5;
+    vel3 = 0.4f * vel0 + 0.6f * vel5;
+    vel4 = 0.2f * vel0 + 0.8f * vel5;
+
+    avel1 = 0.8f * avel0 + 0.2f * avel5;
+    avel2 = 0.6f * avel0 + 0.4f * avel5;
+    avel3 = 0.4f * avel0 + 0.6f * avel5;
+    avel4 = 0.2f * avel0 + 0.8f * avel5;
 }
 
 #endif

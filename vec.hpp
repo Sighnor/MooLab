@@ -1,5 +1,5 @@
-#ifndef ENGINE_VECTOR
-#define ENGINE_VECTOR
+#ifndef MOOLAB_VECTOR
+#define MOOLAB_VECTOR
 
 #include "global.hpp"
 

@@ -1,5 +1,5 @@
-#ifndef ENGINE_QUATERNION
-#define ENGINE_QUATERNION
+#ifndef MOOLAB_QUATERNION
+#define MOOLAB_QUATERNION
 
 #include "mat.hpp"
 

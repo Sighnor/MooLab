@@ -1,5 +1,5 @@
-#ifndef ENGINE_MOTION
-#define ENGINE_MOTION
+#ifndef MOOLAB_MOTION
+#define MOOLAB_MOTION
 
 #include "array.hpp"
 #include "quat.hpp"
@@ -293,7 +293,8 @@ BVH_Motion blend_two_motions(
 BVH_Motion build_loop_motion(
     const BVH_Motion &motion, 
     float half_life, 
-    float fps)
+    float fps, 
+    float dt = 0.0166667f)
 {
     BVH_Motion res;
 
@@ -304,36 +305,24 @@ BVH_Motion build_loop_motion(
     
     for(int ib = 0; ib < res.nbones(); ib++)
     {
-        quat avel_begin = res.bone_local_rotations(0, ib);
-        quat avel_end = res.bone_local_rotations(res.nframes() - 1, ib);
+        quat rot_begin = res.bone_local_rotations(0, ib);
+        quat rot_end = res.bone_local_rotations(res.nframes() - 1, ib);
     
-        vec3 rot_diff = quat_to_avel(avel_begin, avel_end);
-        vec3 avel_diff = quat_to_avel(quat(1.0f, 0.0f, 0.f, 0.f), avel_end) - quat_to_avel(quat(1.0f, 0.0f, 0.f, 0.f), avel_begin);
+        vec3 avel = quat_to_avel(rot_begin, rot_end, (res.nframes() - 1) * dt);
 
-        vec3 vel1 = res.bone_local_positions(res.nframes() - 1, ib) - res.bone_local_positions(res.nframes() - 2, ib);
-        vec3 vel2 = res.bone_local_positions(1, ib) - res.bone_local_positions(0, ib);
+        vec3 pos_begin = res.bone_local_positions(0, ib);
+        vec3 pos_end = res.bone_local_positions(res.nframes() - 1, ib);
 
-        vec3 pos_diff = vec3(00.f, res.bone_local_positions(res.nframes() - 1, ib).y - res.bone_local_positions(0, ib).y, 0.f);
-        vec3 vel_diff = (vel1 - vel2) / 60.f;
+        vec3 vel = vec_to_vel(pos_begin, pos_end, (res.nframes() - 1) * dt);
         
         //旋转差均匀分布到每一帧
         for(int t = 0; t < res.nframes(); t++)
         {
-            vec3 offset_rot1 = decay_spring_implicit_damping_rot(
-                0.5f * rot_diff, 0.5f * avel_diff, half_life, t / fps);
-            vec3 offset_rot2 = decay_spring_implicit_damping_rot(
-                -0.5 * rot_diff, -0.5 * avel_diff, half_life, (res.nframes() - t - 1) / fps);
-            quat offset_rot = rot_vec_to_quat(offset_rot1 + offset_rot2);
+            float value = line_function(float(res.nframes() - 2 * t - 1) / (res.nframes() - 1));
 
-            vec3 offset_pos1 = decay_spring_implicit_damping_pos(
-                0.5 * pos_diff, 0.5 * vel_diff, half_life, t / fps);
-            vec3 offset_pos2 = decay_spring_implicit_damping_pos(
-                -0.5 * pos_diff, -0.5 * vel_diff, half_life, (res.nframes() - t - 1) / fps);
-            vec3 offset_pos = offset_pos1 + offset_pos2;
+            res.bone_local_rotations(t, ib) = avel_to_quat(avel, value * (res.nframes() - 1) * dt) * motion.bone_local_rotations(t, ib);
 
-            res.bone_local_rotations(t, ib) = offset_rot * motion.bone_local_rotations(t, ib);
-
-            res.bone_local_positions(t, ib) =  offset_pos + res.bone_local_positions(t, ib);
+            res.bone_local_positions(t, ib) =  vel_to_vec(vel, value * (res.nframes() - 1) * dt) + res.bone_local_positions(t, ib);
         }
     }
 
@@ -346,32 +335,43 @@ BVH_Motion concatenate_two_motions(
     int mix_frame,
     int mix_time)
 {
-    BVH_Motion res1;
+    BVH_Motion res, res1, res2, mix_motion, mix_motion0, mix_motion1, mix_motion2, mix_motion3;
 
     res1.bone_ids = motion1.bone_ids;
     res1.bone_parents = motion1.bone_parents;
     res1.bone_local_positions = motion1.bone_local_positions;
     res1.bone_local_rotations = motion1.bone_local_rotations;
 
-    vec3 pos = res1.bone_local_positions(mix_frame, 0);
-    quat rot = res1.bone_local_rotations(mix_frame, 0);
-    vec3 facing_axis = rot * vec3(0, 0, 1);
+    vec3 pos = res1.bone_local_positions(std::min(mix_frame, res1.nframes() - 1), 0);
+    quat rot = res1.bone_local_rotations(std::min(mix_frame, res1.nframes() - 1), 0);
+    vec3 facing_axis = rot * vec3(0.f, 0.f, 1.f);
     
-    BVH_Motion res2 = translation_and_rotation(motion2, 0, pos, facing_axis);
+    res2 = translation_and_rotation(motion2, 0, pos, facing_axis);
 
-    BVH_Motion mix_motion0 = motion_sub_sequence(res1, 0, mix_frame);
-    BVH_Motion mix_motion1 = motion_sub_sequence(res1, mix_frame, mix_frame + mix_time);
-    BVH_Motion mix_motion2 = motion_sub_sequence(res2, 0, mix_time);
-    BVH_Motion mix_motion3 = motion_sub_sequence(res2, mix_time, motion2.nframes());
+    if(mix_frame >= res1.nframes())
+    {
+        mix_motion0 = motion_sub_sequence(res1, 0, res1.nframes());
+        mix_motion1 = motion_sub_sequence(res1, res1.nframes() - 1, res1.nframes());
+        mix_motion2 = motion_sub_sequence(res2, 0, mix_time);
+        mix_motion3 = motion_sub_sequence(res2, mix_time, res2.nframes());
+    }
+    else
+    {
+        mix_motion0 = motion_sub_sequence(res1, 0, mix_frame);
+        mix_motion1 = motion_sub_sequence(res1, mix_frame, std::min(mix_frame + mix_time, res1.nframes()));
+        mix_motion2 = motion_sub_sequence(res2, 0, mix_time);
+        mix_motion3 = motion_sub_sequence(res2, mix_time, res2.nframes());
+    }
 
     array1d<float> alpha(mix_time);
     for(int t = 0; t < mix_time; t++)
     {
         alpha(t) = float(t) / (mix_time - 1);
     }
-    BVH_Motion mix_motion = blend_two_motions(mix_motion1, mix_motion2, alpha);
 
-    BVH_Motion res = motion_concatenate(motion_concatenate(mix_motion0, mix_motion), mix_motion3);
+    mix_motion = blend_two_motions(mix_motion1, mix_motion2, alpha);
+
+    res = motion_concatenate(motion_concatenate(mix_motion0, mix_motion), mix_motion3);
     
     return res;
 }

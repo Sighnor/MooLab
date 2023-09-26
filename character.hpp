@@ -1,5 +1,5 @@
-#ifndef ENGINE_CHARACTER
-#define ENGINE_CHARACTER
+#ifndef MOOLAB_CHARACTER
+#define MOOLAB_CHARACTER
 
 #include "array.hpp"
 #include "mesh.hpp"

@@ -1,5 +1,5 @@
-#ifndef ENGINE_TEXTURE
-#define ENGINE_TEXTURE
+#ifndef MOOLAB_TEXTURE
+#define MOOLAB_TEXTURE
 
 #include <opencv2\opencv.hpp>
 #include <opencv2\core\core.hpp>
@@ -35,7 +35,7 @@ struct FBO
     }
 };
 
-FBO contance_two_fbos(FBO *fbo0, FBO *fbo1, float r = 1.f, float c = 1.f)
+FBO concatenate_two_fbos(FBO *fbo0, FBO *fbo1, float r = 1.f, float c = 1.f)
 {
     FBO fbo(r * fbo0->rows, c * (fbo0->cols + fbo1->cols));
 

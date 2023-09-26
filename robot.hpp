@@ -1,5 +1,5 @@
-#ifndef ENGINE_ROBOT
-#define ENGINE_ROBOT
+#ifndef MOOLAB_ROBOT
+#define MOOLAB_ROBOT
 
 #include "character.hpp"
 

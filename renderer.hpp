@@ -1,5 +1,5 @@
-#ifndef ENGINE_RENDERER
-#define ENGINE_RENDERER
+#ifndef MOOLAB_RENDERER
+#define MOOLAB_RENDERER
 
 #include "camera.hpp"
 #include "light.hpp"
@@ -402,12 +402,13 @@ void draw_curve(vec3 pos0, vec3 vel0, vec3 vel5, MooCamera &camera, FBO *fbo, ve
     // vec4 p4 = standardize(projection_matrix * view_matrix * pos_to_vec4(pos4));
     // vec4 p5 = standardize(projection_matrix * view_matrix * pos_to_vec4(pos5));
 
-    array1d<vec3> points(5);
-    points(0) = pos0 + ((vel5 - vel0) / 2.f * 0.2f * 0.2f + vel0 * 0.2f) * N * dt;
-    points(1) = pos0 + ((vel5 - vel0) / 2.f * 0.4f * 0.4f + vel0 * 0.4f) * N * dt;
-    points(2) = pos0 + ((vel5 - vel0) / 2.f * 0.6f * 0.6f + vel0 * 0.6f) * N * dt;
-    points(3) = pos0 + ((vel5 - vel0) / 2.f * 0.8f * 0.8f + vel0 * 0.8f) * N * dt;
-    points(4) = pos0 + ((vel5 - vel0) / 2.f * 1.0f * 1.0f + vel0 * 1.0f) * N * dt;
+    array1d<vec3> points(6);
+    points(0) = pos0;
+    points(1) = pos1;
+    points(2) = pos2;
+    points(3) = pos3;
+    points(4) = pos4;
+    points(5) = pos5;
 
     array1d<vec3> curve_points = spine_curve(points.slice(), 0.05f);
 

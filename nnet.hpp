@@ -1,5 +1,5 @@
-#ifndef ENGINE_NET
-#define ENGINE_NET
+#ifndef MOOLAB_NET
+#define MOOLAB_NET
 
 #include "array.hpp"
 #include "global.hpp"

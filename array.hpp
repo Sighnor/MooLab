@@ -1,5 +1,5 @@
-#ifndef ENGINE_ARRAY
-#define ENGINE_ARRAY
+#ifndef MOOLAB_ARRAY
+#define MOOLAB_ARRAY
 
 #include <assert.h>
 #include <string.h>

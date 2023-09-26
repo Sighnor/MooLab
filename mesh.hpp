@@ -1,5 +1,5 @@
-#ifndef ENGINE_MESH
-#define ENGINE_MESH
+#ifndef MOOLAB_MESH
+#define MOOLAB_MESH
 
 #include "mat.hpp"
 

@@ -1,5 +1,5 @@
-#ifndef ENGINE_IK
-#define ENGINE_IK
+#ifndef MOOLAB_IK
+#define MOOLAB_IK
 
 #include "array.hpp"
 #include "quat.hpp"

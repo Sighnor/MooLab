@@ -1,5 +1,5 @@
-#ifndef ENGINE_MATERIAL
-#define ENGINE_MATERIAL
+#ifndef MOOLAB_MATERIAL
+#define MOOLAB_MATERIAL
 
 #include "global.hpp"
 #include "texture.hpp"

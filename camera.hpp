@@ -1,5 +1,5 @@
-#ifndef ENGINE_CAMERA
-#define ENGINE_CAMERA
+#ifndef MOOLAB_CAMERA
+#define MOOLAB_CAMERA
 
 #include "mat.hpp"
 #include "texture.hpp"

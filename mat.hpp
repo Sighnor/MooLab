@@ -1,5 +1,5 @@
-#ifndef ENGINE_MATRIX
-#define ENGINE_MATRIX
+#ifndef MOOLAB_MATRIX
+#define MOOLAB_MATRIX
 
 #include "global.hpp"
 #include "vec.hpp"
@@ -125,6 +125,7 @@ struct mat4
 {
     mat4() : X(), Y(), Z(), W() {}
     mat4(float k) : X(k, 0.f, 0.f, 0.f), Y(0.f, k, 0.f, 0.f), Z(0.f, 0.f, k, 0.f), W(0.f, 0.f, 0.f, 1.f) {}
+    mat4(float kx, float ky, float kz) : X(kx, 0.f, 0.f, 0.f), Y(0.f, ky, 0.f, 0.f), Z(0.f, 0.f, kz, 0.f), W(0.f, 0.f, 0.f, 1.f) {}
     mat4(vec3 _X, vec3 _Y, vec3 _Z, vec3 _W) : X(vec_to_vec4(_X)), Y(vec_to_vec4(_Y)), Z(vec_to_vec4(_Z)), W(pos_to_vec4(_W)) {}
     mat4(mat3 _Q, vec3 _W) : X(vec_to_vec4(_Q.X)), Y(vec_to_vec4(_Q.Y)), Z(vec_to_vec4(_Q.Z)), W(pos_to_vec4(_W)) {}
     mat4(vec4 _X, vec4 _Y, vec4 _Z, vec4 _W) : X(_X), Y(_Y), Z(_Z), W(_W) {}

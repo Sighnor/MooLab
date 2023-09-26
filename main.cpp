@@ -6,7 +6,6 @@ extern "C"
 
 #include "motion.hpp"
 #include "character.hpp"
-#include "controller.hpp"
 #include "curve.hpp"
 #include "database.hpp"
 #include "ik.hpp"
@@ -71,8 +70,10 @@ int main(int argc, char** argv)
     camera.set_view(vec3(0.f, 0.f, 1.f));
     camera.update_orientation(vec3(0.f, 1.f, 0.f));
     //控制器
-    Controller controller;
-    bind_controller(controller, &camera.position, &camera.direction);
+    Camera_Controller camera_controller;
+    bind_controller(camera_controller, &camera.position, &camera.direction);
+    Character_Controller character_controller;
+    character_controller.rotation0 = quat(1.f, 0.f, 0.f, 0.f);
     //角色，保存原始所有信息
     Character character;
     character_load(character, "../resources/character.bin");
@@ -81,19 +82,36 @@ int main(int argc, char** argv)
     Database_load(db, "../resources/database.bin");
     //对角色数据的拷贝
     MooMesh mesh0 = make_character_rest_mesh(character);
+    MooMesh mesh1 = cube();
     //材质
     MooMaterial material0(PBR);
     material0.roughness = 0.1f;
     material0.tex = img_to_tex("../resources/skybox.png");
     material0.BRDFLut = img_to_tex("../resources/BRDFLut.png");
     material0.EavgLut = img_to_tex("../resources/EavgLut.png");
+    MooMaterial material1(TEXTURE);
+    material1.roughness = 0.1f;
+    material1.tex = img_to_tex("../resources/skybox.png");
+    material1.BRDFLut = img_to_tex("../resources/BRDFLut.png");
+    material1.EavgLut = img_to_tex("../resources/EavgLut.png");
     //model存储mesh的拷贝，但由于mesh本身存储的是地址，实际上仍为mesh地址上的数据
     MooModel model1 = mesh_material_to_model(mesh0, material0);
     //动作库
     int N = 50;
     int dN = 10;
-    BVH_Motion motion, active_motion, search_motion;
+    BVH_Motion motion, motion1, motion2, motion3, motion4, motion5, motion6, active_motion, search_motion;
     Motion_load(motion, "../resources/long_motion.bin");
+    motion1 = motion_sub_sequence(motion, 0, 281);
+    motion2 = motion_sub_sequence(motion, 281, 562);
+    motion3 = motion_sub_sequence(motion, 562, 13153);
+    motion4 = motion_sub_sequence(motion, 13153, 25744);
+    motion5 = motion_sub_sequence(motion, 25744, 39622);
+    motion6 = motion_sub_sequence(motion, 39622, 53500);
+    motion = concatenate_two_motions(motion1, motion2, 281, 30);
+    motion = concatenate_two_motions(motion, motion3, 562, 30);
+    motion = concatenate_two_motions(motion, motion4, 13153, 30);
+    motion = concatenate_two_motions(motion, motion5, 25744, 30);
+    motion = concatenate_two_motions(motion, motion6, 39622, 30);
     active_motion = motion_sub_sequence(motion, 0, 0 + 1.5 * N);
     // active_motion = motion;
     search_motion = motion_sub_sequence(motion, 0, 0 + 1.5 * N);
@@ -103,9 +121,12 @@ int main(int argc, char** argv)
     // search_motion= motion_sub_sequence(motion, 13153, 25744);
     // search_motion = motion_sub_sequence(motion, 25744, 39622);
     // search_motion = motion_sub_sequence(motion, 39622, 53500);
+    // search_motion = build_loop_motion(active_motion, 0.1f, 0.1f);
     //点光源
     Point_Light light(vec3(0.f, 1.f, 1.5f), vec3(0.f, 0.f, -1.f), vec3(20.f));
     MooModel model0 = get_light_model(light);
+    MooModel model2 = mesh_material_to_model(mesh1, material1);
+    model2.transform = mat4(eye3(), vec3(0.f, -0.2f, 0.f)) * mat4(10.f, 0.2f, 10.f);
     //更新信息
     updated_paramters par;
     par.light_dir = &light.light_direction;
@@ -117,6 +138,7 @@ int main(int argc, char** argv)
 
     renderer.models.push_back(&model0);
     renderer.models.push_back(&model1);
+    renderer.models.push_back(&model2);
     renderer.point_lights.push_back(&light);
 
     FBO output0(720, 720);
@@ -149,6 +171,10 @@ int main(int argc, char** argv)
     vec3 rvel;
     float contact = 0;
     vec3 contact_point;
+
+    int weight_vel = 10;
+    int weight_avel = 6;
+    int weight_toe = 3;
 
     batch_forward_kinematics_full(
         motion, 
@@ -206,13 +232,18 @@ int main(int argc, char** argv)
 
     // active_motion = motion;
 
+    cv::imshow("MOOLAB", fbo_to_img(&output0));
+    cv::createTrackbar("vel", "MOOLAB", &weight_vel, 50);
+    cv::createTrackbar("avel", "MOOLAB", &weight_avel, 50);
+    cv::createTrackbar("toe", "MOOLAB", &weight_toe, 50);
+
     while (key != 27 && t < motion.nframes() - N)
     {
         vec3 gamepadstick_left = gamepad_get_stick(GAMEPAD_STICK_LEFT);
         vec3 gamepadstick_right = gamepad_get_stick(GAMEPAD_STICK_RIGHT);
 
-        vec3 global_gamepad_vel = 6.f * (quat(rad_to_deg(controller.ang.x), vec3(0.f, 1.f, 0.f)) * (-gamepadstick_left));
-        vec3 global_gamepad_avel = cross(normalize(curr_character_bone_anim_rotations(Bone_Entity) * vec3(vel.x, 0.f, vel.z)), normalize(global_gamepad_vel)) / (N * 0.0166667f);
+        vec3 global_gamepad_vel = 5.f * (quat(rad_to_deg(camera_controller.ang.x), vec3(0.f, 1.f, 0.f)) * (-gamepadstick_left));
+        vec3 global_gamepad_avel = cross(normalize(curr_character_bone_anim_rotations(Bone_Entity) * vec3(0.f, 0.f, 1.f)), normalize(global_gamepad_vel)) / (N * 0.0166667f);
 
         vec3 local_gamepad_vel = (inv_quat(curr_character_bone_anim_rotations(Bone_Entity)) * global_gamepad_vel);
         vec3 local_gamepad_avel = global_gamepad_avel;
@@ -232,15 +263,15 @@ int main(int argc, char** argv)
         if(frame_num == N)
         {
             frame_num = 0;
-            int best_frame = Database_search(db, contact, vel, avel, local_gamepad_vel, local_gamepad_avel, ltoe, rtoe);
-            search_motion = translation_and_rotation(
-                                motion_sub_sequence(
+
+            // character_controller.vel5 = vel;
+            // character_controller.avel5 = avel;
+            character_controller.update(local_gamepad_vel, local_gamepad_avel, curr_character_bone_anim_rotations(Bone_Entity));
+            int best_frame = Database_search(db, character_controller, contact, ltoe, rtoe, N, dN, weight_vel, weight_avel, weight_toe);
+            search_motion = motion_sub_sequence(
                                     motion, 
                                     best_frame, 
-                                    best_frame + 1.5 * N), 
-                                0, 
-                                curr_character_bone_anim_positions(Bone_Entity) + vel_to_vec(vel, dt), 
-                                avel_to_quat(avel, dt) * curr_character_bone_anim_rotations(Bone_Entity) * vec3(0.f, 0.f, 1.f));
+                                    best_frame + 1.5 * N);
             active_motion = motion_sub_sequence(
                                 concatenate_two_motions(
                                     active_motion, 
@@ -254,6 +285,26 @@ int main(int argc, char** argv)
             // array2d_set_by_cols(active_motion.bone_local_rotations, el_curve_quaternions, Bone_RightForeArm);
             // array2d_set_by_cols(active_motion.bone_local_rotations, wr_curve_quaternions, Bone_RightHand);
         }
+
+        // if(frame_num >= 50 && length(local_gamepad_vel) > 0.1f && (length(local_gamepad_vel - vel) / length(local_gamepad_vel) > 0.1f) || frame_num == N)
+        // {
+        //     character_controller.update(local_gamepad_vel, local_gamepad_avel, curr_character_bone_anim_rotations(Bone_Entity));
+        //     int best_frame = Database_search(db, character_controller, contact, ltoe, rtoe, N, dN, weight_vel, weight_avel, weight_toe);
+        //     search_motion = motion_sub_sequence(
+        //                             motion, 
+        //                             best_frame, 
+        //                             best_frame + 1.5 * N);
+        //     active_motion = motion_sub_sequence(
+        //                         concatenate_two_motions(
+        //                             active_motion, 
+        //                             search_motion, 
+        //                             frame_num, 
+        //                             0.5 * N), 
+        //                         frame_num,
+        //                         frame_num + 1.5 * N);
+            
+        //     frame_num = 0;
+        // }
 
         output0.set(vec3(100.f, 100.f, 200.f), 100.f);
 
@@ -296,6 +347,7 @@ int main(int argc, char** argv)
         {
             lvel = vec_to_vel(features(t - 1, 0), ltoe);
             rvel = vec_to_vel(features(t - 1, 1), rtoe);
+
             // if(contact == 0 && dot(vel, rvel) < 0.f)
             // {
             //     contact = 1;
@@ -319,32 +371,32 @@ int main(int argc, char** argv)
             }
         }
 
-        // if(contact == 0)
-        // {
-        //     IK_two_bones(
-        //         // curr_character_bone_anim_positions(Bone_LeftUpLeg), 
-        //         curr_character_bone_anim_positions(Bone_LeftLeg),
-        //         curr_character_bone_anim_positions(Bone_LeftFoot), 
-        //         curr_character_bone_anim_positions(Bone_LeftToe), 
-        //         // curr_character_bone_anim_rotations(Bone_LeftUpLeg), 
-        //         curr_character_bone_anim_rotations(Bone_LeftLeg), 
-        //         curr_character_bone_anim_rotations(Bone_LeftFoot), 
-        //         curr_character_bone_anim_rotations(Bone_LeftToe), 
-        //         contact_point);
-        // }
-        // else
-        // {
-        //     IK_two_bones(
-        //         // curr_character_bone_anim_positions(Bone_RightUpLeg),
-        //         curr_character_bone_anim_positions(Bone_RightLeg),
-        //         curr_character_bone_anim_positions(Bone_RightFoot), 
-        //         curr_character_bone_anim_positions(Bone_RightToe), 
-        //         // curr_character_bone_anim_rotations(Bone_RightUpLeg), 
-        //         curr_character_bone_anim_rotations(Bone_RightLeg), 
-        //         curr_character_bone_anim_rotations(Bone_RightFoot), 
-        //         curr_character_bone_anim_rotations(Bone_RightToe), 
-        //         contact_point);
-        // }
+        if(contact == 0)
+        {
+            IK_two_bones(
+                // curr_character_bone_anim_positions(Bone_LeftUpLeg), 
+                curr_character_bone_anim_positions(Bone_LeftLeg),
+                curr_character_bone_anim_positions(Bone_LeftFoot), 
+                curr_character_bone_anim_positions(Bone_LeftToe), 
+                // curr_character_bone_anim_rotations(Bone_LeftUpLeg), 
+                curr_character_bone_anim_rotations(Bone_LeftLeg), 
+                curr_character_bone_anim_rotations(Bone_LeftFoot), 
+                curr_character_bone_anim_rotations(Bone_LeftToe), 
+                contact_point);
+        }
+        else
+        {
+            IK_two_bones(
+                // curr_character_bone_anim_positions(Bone_RightUpLeg),
+                curr_character_bone_anim_positions(Bone_RightLeg),
+                curr_character_bone_anim_positions(Bone_RightFoot), 
+                curr_character_bone_anim_positions(Bone_RightToe), 
+                // curr_character_bone_anim_rotations(Bone_RightUpLeg), 
+                curr_character_bone_anim_rotations(Bone_RightLeg), 
+                curr_character_bone_anim_rotations(Bone_RightFoot), 
+                curr_character_bone_anim_rotations(Bone_RightToe), 
+                contact_point);
+        }
 
         deform_character_anim_mesh(
             character, 
@@ -356,14 +408,14 @@ int main(int argc, char** argv)
         //                        curr_character_bone_anim_rotations(Bone_Entity) * vec3(0.f, 1.5f, -1.5f);
         // light.light_radiance = 20.f + 10.f * sin(deg_to_rad(0.5f * t));
 
-        // controller.pos_pid_control(
+        // camera_controller.pos_pid_control(
         //     1.f, 
         //     0.01f, 
         //     0.1f, 
         //     500.f, 
         //     dt, 
         //     curr_character_bone_anim_positions(Bone_Entity) + curr_character_bone_anim_rotations(Bone_Entity) * vec3(0.f, 1.2f, -2.f));
-        // controller.dir_pid_control(
+        // camera_controller.dir_pid_control(
         //     0.7f, 
         //     0.01f, 
         //     0.1f, 
@@ -376,17 +428,25 @@ int main(int argc, char** argv)
         // camera.direction = curr_character_bone_anim_rotations(Bone_Entity) * vec3(0.f, 0.f, 1.f);
         // camera.update_orientation(vec3(0.f, 1.f, 0.f));
 
-        controller.dir_gamepad_control(gamepadstick_right, 0.1f);
+        camera_controller.dir_gamepad_control(gamepadstick_right, 0.1f);
         camera.update_orientation(vec3(0.f, 1.f, 0.f));
-        camera.position = curr_character_bone_anim_positions(Bone_Hips) + camera.orientation * vec3(0.f, 0.f, 2.f);
+        // camera.position = curr_character_bone_anim_positions(Bone_Hips) + camera.orientation * vec3(0.f, 0.f, 2.f);
+        camera_controller.pos_pid_control(
+            1.f, 
+            0.01f, 
+            0.1f, 
+            500.f, 
+            dt, 
+            curr_character_bone_anim_positions(Bone_Hips) + camera.orientation * vec3(0.f, 0.f, 3.5f));
 
-        light.light_position = curr_character_bone_anim_positions(Bone_Hips) + camera.orientation * vec3(0.f, 0.f, 3.f);
+        light.light_position = curr_character_bone_anim_positions(Bone_Hips) + camera.orientation * vec3(0.f, 0.f, 5.f);
 
         renderer.models[0]->transform = mat4(eye3(), renderer.point_lights[0]->light_position) * mat4(0.01f);
         // renderer.models[0]->transform = mat4(eye3(), curr_character_bone_anim_positions(Bone_Entity)) * mat4(0.1f);
 
         draw(renderer.models[0], camera, &output0, &par, true);
         draw(renderer.models[1], camera, &output0, &par, true);
+        // draw(renderer.models[2], camera, &output0, &par, true);
 
         if(contact == 0)
         {
@@ -411,7 +471,7 @@ int main(int argc, char** argv)
                    camera, 
                    &output0, 
                    vec3(0.f, 255.f, 0.f), 
-                   dN);
+                   N);
 
         cv::imshow("MOOLAB", fbo_to_img(&output0));
 
@@ -442,8 +502,8 @@ int main(int argc, char** argv)
         features(t, 3) = rvel;
 
         std::cout << " Time: " << t << " Frame: " << frame_num 
-        //           << " vel: " << db.vels(t, 0).x << ", " << db.vels(t, 0).y << ", " << db.vels(t, 0).z
-        //           << " avel: " << db.avels(t, 0).x << ", " << db.avels(t, 0).y << ", " << db.avels(t, 0).z
+                  << " vel: " << db.vels(t, 0).x << ", " << db.vels(t, 0).y << ", " << db.vels(t, 0).z
+                  << " avel: " << db.avels(t, 0).x << ", " << db.avels(t, 0).y << ", " << db.avels(t, 0).z
         //           << " dir: " << camera.direction.x << ", " << camera.direction.y << ", " << camera.direction.z
         //           << " vel: " << vel.x << ", " << vel.y << ", " << vel.z 
         //           << " avel: " << avel.x << ", " << avel.y << ", " << avel.z 

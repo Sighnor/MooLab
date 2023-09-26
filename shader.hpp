@@ -1,5 +1,5 @@
-#ifndef ENGINE_SHADER
-#define ENGINE_SHADER
+#ifndef MOOLAB_SHADER
+#define MOOLAB_SHADER
 
 #include "global.hpp"
 #include "material.hpp"

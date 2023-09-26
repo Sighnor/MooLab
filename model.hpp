@@ -1,5 +1,5 @@
-#ifndef ENGINE_MODEL
-#define ENGINE_MODEL
+#ifndef MOOLAB_MODEL
+#define MOOLAB_MODEL
 
 #include "mat.hpp"
 #include "mesh.hpp"

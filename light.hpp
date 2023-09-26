@@ -1,5 +1,5 @@
-#ifndef ENGINE_LIGHT
-#define ENGINE_LIGHT
+#ifndef MOOLAB_LIGHT
+#define MOOLAB_LIGHT
 
 #include "material.hpp"
 #include "model.hpp"

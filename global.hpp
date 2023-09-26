@@ -1,5 +1,5 @@
-#ifndef ENGINE_GLOBAL
-#define ENGINE_GLOBAL
+#ifndef MOOLAB_GLOBAL
+#define MOOLAB_GLOBAL
 
 #include <algorithm>
 #include <iostream>
