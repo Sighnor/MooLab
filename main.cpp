@@ -4,7 +4,14 @@ extern "C"
 #include "raymath.h"
 }
 
+<<<<<<< HEAD
 #include "motion.hpp"
+=======
+<<<<<<< HEAD
+#include "motion.hpp"
+=======
+>>>>>>> 5e7c086 (v1.02)
+>>>>>>> 4df4acd (v1.02)
 #include "character.hpp"
 #include "curve.hpp"
 #include "database.hpp"
@@ -13,6 +20,14 @@ extern "C"
 #include "nnet.hpp"
 #include "renderer.hpp"
 #include "robot.hpp"
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+#include "simulator.hpp"
+#include "ui.hpp"
+>>>>>>> 5e7c086 (v1.02)
+>>>>>>> 4df4acd (v1.02)
 
 enum
 {
@@ -48,6 +63,10 @@ vec3 gamepad_get_stick(int stick, const float deadzone = 0.2f)
     return vec3(gamepadx, 0.0f, gamepady);
 }
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 4df4acd (v1.02)
 array1d<quat> transform_float_quat(const slice1d<float> res, vec3 axis, quat q)
 {
     array1d<quat> arr(res.size);
@@ -59,12 +78,30 @@ array1d<quat> transform_float_quat(const slice1d<float> res, vec3 axis, quat q)
         // std::cout << res(i) << std::endl;
     }
     return arr;
+<<<<<<< HEAD
+=======
+=======
+struct code
+{
+    int num;
+    vec2 coord;
+};
+
+vec2 get_code_world_coord(vec2 c, int rows, int cols)
+{
+    return vec2((4 - c.y) * rows / 5, (1 + c.x) * cols / 5);
+>>>>>>> 5e7c086 (v1.02)
+>>>>>>> 4df4acd (v1.02)
 }
 
 int main(int argc, char** argv)
 {
     InitWindow(720, 720, "raylib [background]");
     SetTargetFPS(60);
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 4df4acd (v1.02)
     //相机
     MooCamera camera(1, 0.1f, 0.1f, 0.05f, 50.f, vec3(0.f, 1.3f, -6.f), mat3());
     camera.set_view(vec3(0.f, 0.f, 1.f));
@@ -140,10 +177,47 @@ int main(int argc, char** argv)
     renderer.models.push_back(&model1);
     renderer.models.push_back(&model2);
     renderer.point_lights.push_back(&light);
+<<<<<<< HEAD
+=======
+=======
+    //codes
+    array1d<code> codes(16);
+    for(int i = 0; i < 4; i++)
+    {
+        for(int j = 0; j < 4; j++)
+        {
+            int id = i * 4 + j;
+            codes(id).num = id + 1;
+            codes(id).coord = vec2(i, j);
+        }
+    }
+    //UI
+    MooUI ui;
+    UI_load_char(ui, '0', "../resources/UI/0.png");
+    UI_load_char(ui, '1', "../resources/UI/1.png");
+    UI_load_char(ui, '2', "../resources/UI/2.png");
+    UI_load_char(ui, '3', "../resources/UI/3.png");
+    UI_load_char(ui, '4', "../resources/UI/4.png");
+    UI_load_char(ui, '5', "../resources/UI/5.png");
+    UI_load_char(ui, '6', "../resources/UI/6.png");
+    UI_load_char(ui, '7', "../resources/UI/7.png");
+    UI_load_char(ui, '8', "../resources/UI/8.png");
+    UI_load_char(ui, '9', "../resources/UI/9.png");
+
+    // for(auto c : ui.moochars)
+    // {
+    //     std::cout << c.name << ',' << c.points.size() << std::endl;
+    // }
+>>>>>>> 5e7c086 (v1.02)
+>>>>>>> 4df4acd (v1.02)
 
     FBO output0(720, 720);
 
     int key = 0;
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 4df4acd (v1.02)
     int frame_num = 0;
     int t = 0;
 
@@ -238,10 +312,24 @@ int main(int argc, char** argv)
     cv::createTrackbar("toe", "MOOLAB", &weight_toe, 50);
 
     while (key != 27 && t < motion.nframes() - N)
+<<<<<<< HEAD
+=======
+=======
+    int t = 0;
+    int velid;
+    vec2 vel;
+
+    while (key != 27)
+>>>>>>> 5e7c086 (v1.02)
+>>>>>>> 4df4acd (v1.02)
     {
         vec3 gamepadstick_left = gamepad_get_stick(GAMEPAD_STICK_LEFT);
         vec3 gamepadstick_right = gamepad_get_stick(GAMEPAD_STICK_RIGHT);
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 4df4acd (v1.02)
         vec3 global_gamepad_vel = 5.f * (quat(rad_to_deg(camera_controller.ang.x), vec3(0.f, 1.f, 0.f)) * (-gamepadstick_left));
         vec3 global_gamepad_avel = cross(normalize(curr_character_bone_anim_rotations(Bone_Entity) * vec3(0.f, 0.f, 1.f)), normalize(global_gamepad_vel)) / (N * 0.0166667f);
 
@@ -513,11 +601,76 @@ int main(int argc, char** argv)
         frame_num++;
         t++;
         key = cv::waitKey(1);
+<<<<<<< HEAD
+=======
+=======
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        output0.set(vec3(100.f, 100.f, 200.f), 100.f);
+
+        for(int i = 0; i < codes.size - 1; i++)
+        {
+            UI_draw_num(codes(i).num, get_code_world_coord(codes(i).coord, 720, 720), ui, &output0, vec3(255.f, 0.f, 0.f));
+        }
+
+        cv::imshow("MOOLAB", fbo_to_img(&output0));
+
+        if (t % 30 == 0) 
+        {
+            vel = vec2(0.f);
+
+            vec2 temp_coord = codes(15).coord;
+            if (key == 97)
+            {
+                codes(15).coord.x = clampf(codes(15).coord.x - 1, 0, 3);
+            }
+            else if (key == 100)
+            {
+                codes(15).coord.x = clampf(codes(15).coord.x + 1, 0, 3);
+            }
+            else if (key == 119)
+            {
+                codes(15).coord.y = clampf(codes(15).coord.y + 1, 0, 3);
+            }
+            else if (key == 115)
+            {
+                codes(15).coord.y = clampf(codes(15).coord.y - 1, 0, 3);
+            }
+
+            std::cout << codes(15).coord.x << ',' << codes(15).coord.y << std::endl;
+
+            for(int i = 0; i < codes.size - 1; i++)
+            {
+                if(length(codes(i).coord - codes(15).coord) < 1e-4f)
+                {
+                    velid = i;
+                    vel = (temp_coord - codes(15).coord) / 29.f;
+                    codes(15).coord = codes(i).coord;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            codes(velid).coord = codes(velid).coord + vel;
+        }
+
+        std::cout << " Time: " << t << std::endl;
+        t++;
+        key = cv::waitKey(1);
+        
+>>>>>>> 5e7c086 (v1.02)
+>>>>>>> 4df4acd (v1.02)
         EndDrawing();
     }
 
     CloseWindow();
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 4df4acd (v1.02)
     // features(0, 0) = vec3(0.f);
     // features(0, 1) = vec3(0.f);
     // features(281, 0) = vec3(0.f);
@@ -576,5 +729,10 @@ int main(int argc, char** argv)
     // Database_revise(db);
     // Database_save(db, "../resources/database.bin");
 
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> 5e7c086 (v1.02)
+>>>>>>> 4df4acd (v1.02)
     return 0;
 }
