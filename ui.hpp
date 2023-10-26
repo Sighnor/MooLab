@@ -72,7 +72,7 @@ void UI_load_char(MooUI &ui, char c, const char* img_name)
 }
 
 void UI_draw_char(char c, vec2 point, MooUI &ui, FBO *fbo, vec3 color)
-{  
+{
     int id;
     id = ui.distances[c];
     if(c >= 48 && c <= 57)

@@ -115,22 +115,6 @@ void robot_evaluate(
     const slice1d<float> rotations,
     slice1d<float> positions)
 {
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 4df4acd (v1.02)
-    positions(0) = rad_to_deg(rotations(0));
-    positions(1) = rad_to_deg(0.f);
-    positions(2) = rad_to_deg(0.2f * rotations(1));
-    positions(3) = rad_to_deg(0.7f * rotations(1));
-    positions(4) = rad_to_deg(0.1f * rotations(1) + 0.2f * rotations(2));
-    positions(5) = rad_to_deg(0.7f * rotations(2));
-    positions(6) = rad_to_deg(0.1f * rotations(2) + 0.2f * rotations(3));
-    positions(7) = rad_to_deg(0.7f * rotations(3));
-    positions(8) = rad_to_deg(0.1f * rotations(3));
-<<<<<<< HEAD
-=======
-=======
     positions(0) = rad_to_deg(0.f);
     positions(1) = rad_to_deg(0.6f * rotations(0));
     positions(2) = rad_to_deg(0.4f * rotations(0) + 0.2f * rotations(1));
@@ -140,8 +124,6 @@ void robot_evaluate(
     positions(6) = rad_to_deg(0.2f * rotations(2) + 0.2f * rotations(3));
     positions(7) = rad_to_deg(0.6f * rotations(3));
     positions(8) = rad_to_deg(0.2f * rotations(3));
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
     positions(9) = rad_to_deg(0.f);
 }
 

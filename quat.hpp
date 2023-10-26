@@ -197,16 +197,10 @@ static inline vec3 quat_to_avel(quat last, quat curr, float dt = 0.0166667f)
 
 static inline quat avel_to_quat(vec3 avel, float t)
 {
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
     if(length(avel) < 1e-4f)
     {
         return quat(1.f, 0.f, 0.f, 0.f);
     }
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
     float theta = rad_to_deg(length(avel) * t);
     return quat(theta, avel);
 }

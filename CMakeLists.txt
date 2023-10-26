@@ -43,14 +43,6 @@ add_definitions(-D_DEFAULT_SOURCE)
 add_definitions(-DRAYLIB_BUILD_MODE=RELEASE)
 add_definitions(-DPLATFORM_DESKTOP)
 
-<<<<<<< HEAD
-add_executable(Engine main.cpp array.hpp camera.hpp character.hpp controller.hpp curve.hpp database.hpp global.hpp ik.hpp light.hpp material.hpp mat.hpp mesh.hpp model.hpp motion.hpp nnet.hpp quat.hpp renderer.hpp robot.hpp shader.hpp texture.hpp vec.hpp)
-=======
-<<<<<<< HEAD
-add_executable(Engine main.cpp array.hpp camera.hpp character.hpp controller.hpp curve.hpp database.hpp global.hpp ik.hpp light.hpp material.hpp mat.hpp mesh.hpp model.hpp motion.hpp nnet.hpp quat.hpp renderer.hpp robot.hpp shader.hpp texture.hpp vec.hpp)
-=======
-add_executable(Engine main.cpp array.hpp camera.hpp character.hpp controller.hpp curve.hpp database.hpp global.hpp ik.hpp light.hpp material.hpp mat.hpp mesh.hpp model.hpp motion.hpp nnet.hpp quat.hpp renderer.hpp robot.hpp shader.hpp simulator.hpp texture.hpp ui.hpp vec.hpp)
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
+add_executable(Engine main.cpp array.hpp camera.hpp character.hpp controller.hpp curve.hpp database.hpp global.hpp ik.hpp light.hpp material.hpp mat.hpp mesh.hpp model.hpp motion.hpp nnet.hpp quat.hpp renderer.hpp robot.hpp shader.hpp simulator.hpp strategy.hpp texture.hpp ui.hpp vec.hpp)
 target_link_libraries(Engine ${OpenCV_LIBRARIES})
 target_link_libraries(Engine raylib)

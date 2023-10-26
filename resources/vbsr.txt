@@ -64,65 +64,12 @@ int main(int argc, char** argv)
     MooCamera camera(1, 0.1f, 0.1f, 0.05f, 50.f, vec3(0.f, 1.2f, - 3.f), mat3());
     camera.set_view(vec3(0.f, 0.f, 1.f));
     camera.update_orientation(vec3(0.f, 1.f, 0.f));
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 4df4acd (v1.02)
-    //控制器
-    Controller controller;
-    bind_controller(controller, &camera.position, &camera.direction);
-    //角色，保存原始所有信息
-    Character character;
-    character_load(character, "../resources/character.bin");
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
     //机器人
     Robot robot;
     robot_load(robot, "../resources/robot.bin");
     // robot = create_robot(0.4f, 5.f, 18, 50, 10, 0.8f);
     // robot_save(robot, "../resources/robot.bin");
     //对角色数据的拷贝
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 4df4acd (v1.02)
-    MooMesh mesh1 = make_character_rest_mesh(character);
-    MooMesh mesh2 = make_robot_rest_mesh(robot);
-    MooMesh mesh3 = cube();
-    //材质
-    MooMaterial material1(PBR);
-    material1.roughness = 0.1f;
-    material1.tex = img_to_tex("../resources/texture.png");
-    material1.BRDFLut = img_to_tex("../resources/BRDFLut.png");
-    material1.EavgLut = img_to_tex("../resources/EavgLut.png");
-    MooMaterial material2(PBR);
-    material2.roughness = 0.75f;
-    material2.tex = img_to_tex("../resources/texture.png");
-    material2.BRDFLut = img_to_tex("../resources/BRDFLut.png");
-    material2.EavgLut = img_to_tex("../resources/EavgLut.png");
-    MooMaterial material3(TEXTURE);
-    material3.roughness = 0.5f;
-    material3.tex = img_to_tex("../resources/skybox.png");
-    material3.BRDFLut = img_to_tex("../resources/BRDFLut.png");
-    material3.EavgLut = img_to_tex("../resources/EavgLut.png");
-    //model存储mesh的拷贝，但由于mesh本身存储的是地址，实际上仍为mesh地址上的数据
-    MooModel model1 = mesh_material_to_model(mesh1, material1);
-    MooModel model2 = mesh_material_to_model(mesh2, material2);
-    MooModel model3 = mesh_material_to_model(mesh3, material3);
-    //动作库
-    BVH_Motion motion, motion1, motion2, motion3, motion4, motion5, motion6;
-    Motion_load(motion, "../resources/long_motion.bin");
-    motion1 = motion_sub_sequence(motion, 0, 50);
-    motion2 = motion_sub_sequence(motion, 300, 350);
-    motion3 = translation_and_rotation(motion1, 0, vec3(0.f, 0.5f, 0.f), vec3(0.f, 0.f, -1.f));
-    motion4 = translation_and_rotation(motion2, 0, vec3(0.f, 0.5f, 0.f), vec3(-1.f, 0.f, 0.f));
-    motion5 = motion_concatenate(motion3, motion4);
-<<<<<<< HEAD
-=======
-=======
     MooMesh mesh1 = make_robot_rest_mesh(robot);
     //材质
     MooMaterial material1(PBR);
@@ -132,8 +79,6 @@ int main(int argc, char** argv)
     material1.EavgLut = img_to_tex("../resources/EavgLut.png");
     //model存储mesh的拷贝，但由于mesh本身存储的是地址，实际上仍为mesh地址上的数据
     MooModel model1 = mesh_material_to_model(mesh1, material1);
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
     //点光源
     Point_Light light(vec3(0.f, 1.f, 1.5f), vec3(0.f, 0.f, -1.f), vec3(8.f));
     MooModel model0 = get_light_model(light);
@@ -145,22 +90,8 @@ int main(int argc, char** argv)
     par.shadow_map = light.shadow_map;
     //渲染器
     MooRenderer renderer;
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 4df4acd (v1.02)
-
     renderer.models.push_back(&model0);
     renderer.models.push_back(&model1);
-    renderer.models.push_back(&model2);
-    renderer.models.push_back(&model3);
-<<<<<<< HEAD
-=======
-=======
-    renderer.models.push_back(&model0);
-    renderer.models.push_back(&model1);
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
     renderer.point_lights.push_back(&light);
 
     FBO output(540, 1080);
@@ -179,48 +110,17 @@ int main(int argc, char** argv)
     rot_quat_evaluation.resize(rot_quat);
     quat_rot_evaluation.resize(quat_rot);
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 4df4acd (v1.02)
-    // std::cout << compressor_evaluation.layers[0].size << ", " << compressor_evaluation.layers[compressor.weights.size()].size << std::endl;
-    // std::cout << decompressor_evaluation.layers[0].size << ", " << decompressor_evaluation.layers[decompressor.weights.size()].size << std::endl;
-    // std::cout << compressor_evaluation.layers.size() << ", " << decompressor_evaluation.layers.size() << std::endl;
-
     int key = 0;
     int t = 0;
 
-    array1d<vec3> character_bone_anim_positions(motion.nbones());
-    array1d<quat> character_bone_anim_rotations(motion.nbones());
-
-<<<<<<< HEAD
-=======
-=======
-    int key = 0;
-    int t = 0;
-
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
     array1d<vec3> robot_bone_anim_positions0(robot.nbones());
     array1d<quat> robot_bone_anim_rotations0(robot.nbones());
     array1d<vec3> robot_bone_anim_positions1(robot.nbones());
     array1d<quat> robot_bone_anim_rotations1(robot.nbones());
 
-<<<<<<< HEAD
-    array2d<float> rotations;
-    array2d<float> positions;
-    array2d<quat> quaternions;
-=======
-<<<<<<< HEAD
-    array2d<float> rotations;
-    array2d<float> positions;
-    array2d<quat> quaternions;
-=======
     array2d<float> rotations(14641, 4);
     array2d<float> positions(14641, 10);
     array2d<quat> quaternions(14641, 10);
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
     array1d<quat> test;
 
     FILE* fr = fopen("../resources/rotations.bin", "rb");
@@ -239,69 +139,12 @@ int main(int argc, char** argv)
     fclose(fq);
     fclose(ft);
 
-<<<<<<< HEAD
-    array1d<float> vals(5000);
-=======
-<<<<<<< HEAD
-    array1d<float> vals(5000);
-=======
     array1d<float> vals(14641);
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
 
     std::random_device dev;
     std::mt19937 rng(dev());
     std::uniform_real_distribution<float> dist(0.f, 1.f);
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 4df4acd (v1.02)
-    array1d<float> sh_points(5);
-    array1d<float> el_points(5);
-    array1d<float> wr_points(5);
-    array1d<float> td(4);
-
-    sh_points(0) = 105.f;
-    sh_points(1) = 60.f;
-    sh_points(2) = 15.f;
-    sh_points(3) = 60.f;
-    sh_points(4) = 105.f;
-
-    el_points(0) = -80.f;
-    el_points(1) = -100.f;
-    el_points(2) = 0.f;
-    el_points(3) = -70.f;
-    el_points(4) = -80.f;
-
-    wr_points(0) = 0.f;
-    wr_points(1) = -60.f;
-    wr_points(2) = 90.f;
-    wr_points(3) = -10.f;
-    wr_points(4) = 0.f;
-
-    td(0) = 0.4f;
-    td(1) = 0.1f;
-    td(2) = 0.8f;
-    td(3) = 0.3f;
-
-    // array1d<float> sh_curve_points = LFPB(sh_points, td, 10000, 0.0166667f);
-    // array1d<float> el_curve_points = LFPB(el_points, td, 10000, 0.0166667f);
-    // array1d<float> wr_curve_points = LFPB(wr_points, td, 10000, 0.0166667f);
-
-    // array1d<float> sh_curve_points = spine_curve(sh_points, 0.0166667f);
-    // array1d<float> el_curve_points = spine_curve(el_points, 0.0166667f);
-    // array1d<float> wr_curve_points = spine_curve(wr_points, 0.0166667f);
-
-    vec3 target0 = vec3(0.f, 4.5f, 0.f);
-    vec3 target1 = vec3(0.f, 2.0f, 0.f);
-
-    while (key != 27)
-    {
-        if(t == 5000)
-<<<<<<< HEAD
-=======
-=======
     vec3 target0 = vec3(0.f, 4.5f, 0.f);
     vec3 target1 = vec3(0.f, 2.0f, 0.f);
 
@@ -318,8 +161,6 @@ int main(int argc, char** argv)
     while (key != 27 && t < 14641)
     {
         if(t == 14641)
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
         {
             t = 0;
         }
@@ -332,53 +173,6 @@ int main(int argc, char** argv)
         vec3 gamepadstick_left = gamepad_get_stick(GAMEPAD_STICK_LEFT);
         vec3 gamepadstick_right = gamepad_get_stick(GAMEPAD_STICK_RIGHT);
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 4df4acd (v1.02)
-        // output0.set(vec3(0.f, 0.f, 0.f), 100.f);
-        // output1.set(vec3(0.f, 0.f, 0.f), 100.f);
-
-        // camera.position.x = sin(deg_to_rad(t));
-        // camera.position.y = sin(deg_to_rad(2 * t + 45));
-        // camera.position.z = 2.f + 0.5f * sin(deg_to_rad(t));
-
-        // renderer.models[2]->transform = mat4(1.5f);
-
-        renderer.models[3]->transform = mat4(eye3(), vec3(-24.f, 0.f, 0.f)) * 
-                                        mat4(5.f);
-
-        batch_forward_kinematics_full(motion, t, character_bone_anim_positions, character_bone_anim_rotations);
-
-        deform_character_anim_mesh(character, character_bone_anim_positions, character_bone_anim_rotations, mesh1);
-
-        // light.light_position = character_bone_anim_positions(0) + vec3(0.5 * sin(deg_to_rad(t)), 1.f + 0.5 * sin(deg_to_rad(2 * t)), 1.f * sin(deg_to_rad(3 * t)));
-        // light.light_direction = vec3(0.f, 1.2f, 0.f) - light.light_position;
-        light.light_position = vec3(5.f, 5.f, 0.f);
-        renderer.models[0]->transform = mat4(eye3(), renderer.point_lights[0]->light_position) * 
-                                        mat4(0.01f);
-        // renderer.models[1]->transform = mat4(2.f);
-
-        // renderer.models[2]->transform = mat4(mat3(vec3(0.5f, 0.f, 0.f), vec3(0.f, 1.f, 0.f), vec3(0.f, 0.f, 0.5f)), vec3(0.f, 0.f, 0.f));
-
-        // renderer.models[2]->transform = mat4(Rodrigues(2 * t, vec3(0.f, -1.f, 0.f)), vec3());
-        // renderer.models[2]->transform = mat4(eye3(), vec3(0.f, 0.f, 0.f));
-
-        // gamepadstick_left.x = 2.f * dist(rng) - 1.f;
-        // gamepadstick_left.z = 2.f * dist(rng) - 1.f;
-        // gamepadstick_right.x = gamepadstick_left.z;
-        // gamepadstick_right.z = gamepadstick_left.z;
-        
-        // slice1d_set(
-        //     rotations(t), 
-        //     std::vector<float>{
-        //         PI / 4.f * gamepadstick_left.x, 
-        //         0.8f * gamepadstick_left.z, 
-        //         1.0f * gamepadstick_right.x, 
-        //         0.9f * gamepadstick_right.z});
-<<<<<<< HEAD
-=======
-=======
         // if(t % 11 == 0)
         // {
         //     lx = -lx;
@@ -456,8 +250,6 @@ int main(int argc, char** argv)
                 0.9f * gamepadstick_left.z, 
                 1.1f * gamepadstick_right.x, 
                 1.4f * gamepadstick_right.z});
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
 
         // slice1d_set(
         //     rotations(t), 
@@ -478,104 +270,7 @@ int main(int argc, char** argv)
         //         quat(0.f, vec3(1.f, 0.f, 0.f)), 
         //         quat(wr_curve_points(t), vec3(1.f, 0.f, 0.f))});
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 4df4acd (v1.02)
-        array2d_set_by_rows(quaternions, test, t);
-
-        nnet_evaluate(
-            quaternions(t),
-            rotations(t),
-            quat_rot_evaluation,
-            quat_rot);
-
-        robot_evaluate(
-            rotations(t),
-            positions(t));
-
-        // nnet_evaluate(
-        //     rotations(t),
-        //     quaternions(t),
-        //     rot_quat_evaluation,
-        //     rot_quat);
-
-        // robot_evaluate(
-        //     rotations(t),
-        //     positions(t));
-
-        // target0 = vec3(1.f * sin(deg_to_rad(5.f * t)), 2.5f - 1.5f * sin(deg_to_rad(1.5f * t)), - 5.f * (-1.f + 2.f / 5000.f * t));
-        // FABRIK_one_end(robot.bone_local_positions, robot.bone_local_rotations, target0, 7);
-
-        // target0 = vec3(0.75f * sin(deg_to_rad(1.1f * t)), 3.5f - 3.f * gamepadstick_left.z, - 7.5f * gamepadstick_left.x);
-        // target1 = vec3(0.5f * cos(deg_to_rad(1.4f * t)), 2.0f - 1.5f * gamepadstick_right.z, - 5.f * gamepadstick_right.x);
-        // target0 = vec3(0.f, (3.5f + 1.f * sin(deg_to_rad(1.1f * t))) * sin(PI / 12.f + PI / 6000.f * t), (3.5f + 1.f * sin(deg_to_rad(1.1f * t))) * cos(PI / 12.f + PI / 6000.f * t));
-        // target1 = vec3(0.f, 2.f, 0.75f * cos(deg_to_rad(2.3f * t)));
-        // target0.x = 0.75f * sin(deg_to_rad(1.1f * t));
-        // target0.y = target0.y - 0.01f * gamepadstick_left.z;
-        // target0.z = target0.z - 0.01f * gamepadstick_left.x;
-        // target1.x = 0.5f * cos(deg_to_rad(1.4f * t));
-        // target1.y = target1.y - 0.01f * gamepadstick_right.z;
-        // target1.z = target1.z - 0.01f * gamepadstick_right.x;
-        // FABRIK_two_end(robot.bone_local_positions, robot.bone_local_rotations, target0, target1, 9, 4);
-        // FABRIK_two_end_constraints(robot.bone_local_positions, robot.bone_local_rotations, target0, target1, 9, 4, 45);
-        // FABRIK_one_end(robot.bone_local_positions, robot.bone_local_rotations, target0, 9);
-        // FABRIK_one_end_constraints(robot.bone_local_positions, robot.bone_local_rotations, target0, 9, 45);
-
-        // robot_forward_kinematics_full(robot, robot_bone_anim_positions0, robot_bone_anim_rotations0);
-        robot_forward_kinematics_positions(robot, robot_bone_anim_positions0, robot_bone_anim_rotations0, positions(t));
-        // robot_forward_kinematics_quaternions(robot, robot_bone_anim_positions0, robot_bone_anim_rotations0, quaternions(t));
-        deform_robot_anim_mesh(robot, robot_bone_anim_positions0, robot_bone_anim_rotations0, mesh2);
-
-        // camera.set_pos(vec3(2.f, 3.f, 0.f));
-        // camera.set_pos(vec3(4.f, 2.f, -0.5f));
-        camera.set_pos(vec3(8.f, 2.f, 0.5f));
-        camera.set_view(vec3(-1.f, 0.f, 0.f));
-        camera.update_orientation(vec3(0.f, 1.f, 0.f));
-
-        // camera.set_pos(vec3(2.5f, 2.f, 0.8f));
-        // camera.set_view(vec3(-1.f, 0.f, 0.f));
-        // camera.update_orientation(vec3(0.f, 1.f, 0.f));
-
-        // controller.pos_pid_control(1.f, 0.01f, 0.1f, 200.f, 1.f / 60.f, character_bone_anim_positions(0) + character_bone_anim_rotations(0) * vec3(0.f, 1.2f, -2.f));
-        // controller.dir_pid_control(0.7, 0.01f, 0.5f, 200.f, 1.f / 60.f, character_bone_anim_rotations(0) * vec3(0.f, 0.f, 1.f));
-        // camera.update_orientation(vec3(0.f, 1.f, 0.f));
-
-        // vec3 yxz = quat_to_euler_YXZ(character_bone_anim_rotations(0));
-        // mat3 R = Rodrigues(yxz.x, vec3(0.f, 1.f, 0.f));
-        // camera.set_pos(character_bone_anim_positions(0) + character_bone_anim_rotations(0) * vec3(0.f, 1.2f, -2.f));
-        // camera.set_view((character_bone_anim_rotations(0) * vec3(0.f, 0.f, 1.f)));
-        // camera.update_orientation(vec3(0.f, 1.f, 0.f));
-        // camera.set_view(R * vec3(0.f, 0.f, -1.f), vec3(0.f, 1.f, 0.f));
-
-        draw(renderer.models[0], camera, &output0, &par, true);
-        // draw(renderer.models[1], camera, &output0, &par, true);
-        draw(renderer.models[2], camera, &output0, &par, true);
-        // draw(renderer.models[3], camera, &output0, &par, true);
-        // draw_point(target0, camera, &output0, vec3(255.f, 0.f, 0.f));
-        // draw_point(target1, camera, &output0, vec3(0.f, 0.f, 255.f));
-        for(int i = 0; i < 9; i++)
-        {
-            draw_point(robot_bone_anim_positions0(i), camera, &output0, vec3(0.f, 255.f, 0.f));
-            draw_line(robot_bone_anim_positions0(i), robot_bone_anim_positions0(i + 1), camera, &output0, (0.f, 0.f, 0.f));
-        }
-        draw_point(robot_bone_anim_positions0(9), camera, &output0, vec3(0.f, 255.f, 0.f));
-
-        // renderer.models[1]->transform = mat4(1.f);
-
-        // nnet_evaluate(
-        //     rotations(t),
-        //     quaternions(t),
-        //     rot_quat_evaluation,
-        //     rot_quat);
-
-        // array2d_set_by_rows(quaternions, robot.bone_local_rotations, t);
-<<<<<<< HEAD
-=======
-=======
         // array2d_set_by_rows(quaternions, test, t);
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
 
         // nnet_evaluate(
         //     quaternions(t),
@@ -587,32 +282,6 @@ int main(int argc, char** argv)
         //     rotations(t),
         //     positions(t));
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 4df4acd (v1.02)
-        // robot_forward_kinematics_full(robot, robot_bone_anim_positions1, robot_bone_anim_rotations1);
-        robot_forward_kinematics_positions(robot, robot_bone_anim_positions1, robot_bone_anim_rotations1, positions(t));
-        // robot_forward_kinematics_quaternions(robot, robot_bone_anim_positions1, robot_bone_anim_rotations1, quaternions(t));
-        deform_robot_anim_mesh(robot, robot_bone_anim_positions1, robot_bone_anim_rotations1, mesh2);
-
-        // camera.set_pos(vec3(2.f, 3.f, -1.8f));
-        // camera.set_pos(vec3(4.f, 2.f, -2.5f));
-        camera.set_pos(vec3(8.f, 2.f, -0.5f));
-        camera.set_view(vec3(-1.f, 0.f, 0.f));
-        camera.update_orientation(vec3(0.f, 1.f, 0.f));
-
-        // camera.set_pos(vec3(2.5f, 2.f, -0.2f));
-        // camera.set_view(vec3(-1.f, 0.f, 0.f));
-        // camera.update_orientation(vec3(0.f, 1.f, 0.f));
-
-        draw(renderer.models[0], camera, &output1, &par, true);
-        // draw(renderer.models[1], camera, &output1, &par, true);
-        draw(renderer.models[2], camera, &output1, &par, true);
-        // draw(renderer.models[3], camera, &output1, &par, true);
-<<<<<<< HEAD
-=======
-=======
         // nnet_evaluate(
         //     rotations(t),
         //     quaternions(t),
@@ -687,34 +356,10 @@ int main(int argc, char** argv)
         draw(renderer.models[0], camera, &output1, &par, true);
         draw(renderer.models[1], camera, &output1, &par, true);
 
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
         // draw_point(target0, camera, &output1, vec3(255.f, 0.f, 0.f));
         // draw_point(target1, camera, &output1, vec3(0.f, 0.f, 255.f));
         for(int i = 0; i < 9; i++)
         {
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 4df4acd (v1.02)
-            draw_point(robot_bone_anim_positions1(i), camera, &output1, vec3(0.f, 255.f, 0.f));
-            draw_line(robot_bone_anim_positions1(i), robot_bone_anim_positions1(i + 1), camera, &output1, (0.f, 0.f, 0.f));
-        }
-        draw_point(robot_bone_anim_positions1(9), camera, &output1, vec3(0.f, 255.f, 0.f));
-
-        // cv::imshow("left", fbo_to_img(&output0));
-        // cv::imshow("right", fbo_to_img(&output1));
-        output = contance_two_fbos(&output0, &output1, 0.5f, 0.5f);
-        cv::imshow("img", fbo_to_img(&output));
-        key = cv::waitKey(1);
-
-        // char left_name[50];
-        // char right_name[50];
-        // sprintf(left_name, "../../Shape_Feature_Extraction/resources/img/zleft%d.png", t);
-        // sprintf(right_name, "../../Shape_Feature_Extraction/resources/img/zright%d.png", t);
-<<<<<<< HEAD
-=======
-=======
             draw_point(robot_bone_anim_positions1(i), camera, &output1, vec3(255.f, 0.f, 0.f));
             draw_line(robot_bone_anim_positions1(i), robot_bone_anim_positions1(i + 1), camera, &output1, vec3(255.f, 0.f, 0.f));
         }
@@ -737,23 +382,13 @@ int main(int argc, char** argv)
         // char right_name[100];
         // sprintf(left_name, "../../Vision_Based_Shape_Reconstruction/resources/img/zleft%d.png", t);
         // sprintf(right_name, "../../Vision_Based_Shape_Reconstruction/resources/img/zright%d.png", t);
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
         // cv::imwrite(left_name, fbo_to_img(&output0));
         // cv::imwrite(right_name, fbo_to_img(&output1));
 
         // vals(t) = compute_val(robot_bone_anim_positions0, robot_bone_anim_positions1);
 
         // std::cout << vals(t) << std::endl;
-<<<<<<< HEAD
-
-=======
-<<<<<<< HEAD
-
-=======
         // std::cout << blend << std::endl;
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
         std::cout << t << std::endl;
         t++;
         // print(character_bone_anim_positions(0));
@@ -763,15 +398,7 @@ int main(int argc, char** argv)
     // std::ofstream outfile;
     // outfile.open("../resources/val_quat.txt");
 
-<<<<<<< HEAD
-    // for(int i = 0; i < 5000; i++)
-=======
-<<<<<<< HEAD
-    // for(int i = 0; i < 5000; i++)
-=======
     // for(int i = 0; i < 14641; i++)
->>>>>>> 5e7c086 (v1.02)
->>>>>>> 4df4acd (v1.02)
     // {
     //     outfile << vals(i) << "\n";
     // }
