@@ -14,11 +14,17 @@ struct MooCamera
     vec3 position;
     vec3 direction;
     mat3 orientation;
+    int screen_width;
+    int screen_height;
     FBO *fbo;
 
 
-    MooCamera(float _fov, float _width, float _height, float _z_near, float _z_far, vec3 _position, mat3 _orientation) :
-    fov(_fov), width(_width), height(_height), z_near(_z_near), z_far(_z_far), position(_position), orientation(_orientation) {}
+    MooCamera(float _fov, float _width, float _height, float _z_near, float _z_far, vec3 _position, mat3 _orientation, int _screen_width, int _screen_height) :
+    fov(_fov), width(_width), height(_height), z_near(_z_near), z_far(_z_far), position(_position), orientation(_orientation), screen_width(_screen_width), screen_height(_screen_height)
+    {
+        fbo = (FBO*)malloc(1 * sizeof(FBO));
+        fbo[0] = FBO(_screen_width, _screen_height);
+    }
 
     void set_pos(vec3 pos);
     void set_view(vec3 view);

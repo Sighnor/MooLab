@@ -1,0 +1,243 @@
+extern "C"
+{
+#include "raylib.h"
+#include "raymath.h"
+}
+
+#include "motion.hpp"
+#include "character.hpp"
+#include "curve.hpp"
+#include "database.hpp"
+#include "ik.hpp"
+#include "motion.hpp"
+#include "nnet.hpp"
+#include "renderer.hpp"
+#include "robot.hpp"
+
+enum
+{
+    GAMEPAD_PLAYER = 0,
+};
+
+enum
+{
+    GAMEPAD_STICK_LEFT,
+    GAMEPAD_STICK_RIGHT,
+};
+
+vec3 gamepad_get_stick(int stick, const float deadzone = 0.2f)
+{
+    float gamepadx = GetGamepadAxisMovement(GAMEPAD_PLAYER, stick == GAMEPAD_STICK_LEFT ? GAMEPAD_AXIS_LEFT_X : GAMEPAD_AXIS_RIGHT_X);
+    float gamepady = GetGamepadAxisMovement(GAMEPAD_PLAYER, stick == GAMEPAD_STICK_LEFT ? GAMEPAD_AXIS_LEFT_Y : GAMEPAD_AXIS_RIGHT_Y);
+    float gamepadmag = sqrtf(gamepadx * gamepadx + gamepady * gamepady);
+    
+    if (gamepadmag > deadzone)
+    {
+        float gamepaddirx = gamepadx / gamepadmag;
+        float gamepaddiry = gamepady / gamepadmag;
+        float gamepadclippedmag = gamepadmag > 1.0f ? 1.0f : gamepadmag * gamepadmag;
+        gamepadx = gamepaddirx * gamepadclippedmag;
+        gamepady = gamepaddiry * gamepadclippedmag;
+    }
+    else
+    {
+        gamepadx = 0.0f;
+        gamepady = 0.0f;
+    }
+    
+    return vec3(gamepadx, 0.0f, gamepady);
+}
+
+int main(int argc, char** argv)
+{
+    InitWindow(720, 720, "raylib [background]");
+    SetTargetFPS(60);
+    //相机
+    MooCamera camera(1, 0.1f, 0.1f, 0.05f, 50.f, vec3(0.f, 1.3f, 12.f), mat3(), 720, 720);
+    camera.set_view(vec3(0.f, 0.f, -1.f));
+    camera.update_orientation(vec3(0.f, 1.f, 0.f));
+    //控制器
+    Camera_Controller camera_controller;
+    bind_controller(camera_controller, &camera.position, &camera.direction);
+    //点光源
+    Point_Light light(vec3(0.f, 1.f, 1.5f), vec3(0.f, 0.f, -1.f), vec3(20.f));
+    //对角色数据的拷贝
+    MooMesh mesh1 = capsule(0.25f, 2.f, 18, 18);
+    //材质
+    MooMaterial material1(TEXTURE);
+    material1.roughness = 0.1f;
+    material1.tex = img_to_tex("../resources/skybox.png");
+    material1.BRDFLut = img_to_tex("../resources/BRDFLut.png");
+    material1.EavgLut = img_to_tex("../resources/EavgLut.png");
+    //model存储mesh的拷贝，但由于mesh本身存储的是地址，实际上仍为mesh地址上的数据
+    MooModel model0 = get_light_model(light);
+    MooModel model1 = mesh_material_to_model(mesh1, material1);
+    MooModel model2 = mesh_material_to_model(mesh1, material1);
+    MooModel model3 = mesh_material_to_model(mesh1, material1);
+    MooModel model4 = mesh_material_to_model(mesh1, material1);
+    MooModel model5 = mesh_material_to_model(mesh1, material1);
+    MooModel model6 = mesh_material_to_model(mesh1, material1);
+    MooModel model7 = mesh_material_to_model(mesh1, material1);
+    MooModel model8 = mesh_material_to_model(mesh1, material1);
+    MooModel model9 = mesh_material_to_model(mesh1, material1);
+    MooModel model10 = mesh_material_to_model(mesh1, material1);
+    MooModel model11 = mesh_material_to_model(mesh1, material1);
+    MooModel model12 = mesh_material_to_model(mesh1, material1);
+    MooModel model13 = mesh_material_to_model(mesh1, material1);
+    MooModel model14 = mesh_material_to_model(mesh1, material1);
+    MooModel model15 = mesh_material_to_model(mesh1, material1);
+    MooModel model16 = mesh_material_to_model(mesh1, material1);
+    MooModel model17 = mesh_material_to_model(mesh1, material1);
+    MooModel model18 = mesh_material_to_model(mesh1, material1);
+    MooModel model19 = mesh_material_to_model(mesh1, material1);
+    MooModel model20 = mesh_material_to_model(mesh1, material1);
+    MooModel model21 = mesh_material_to_model(mesh1, material1);
+    MooModel model22 = mesh_material_to_model(mesh1, material1);
+    //更新信息
+    updated_paramters par;
+    par.light_dir = &light.light_direction;
+    par.light_pos = &light.light_position;
+    par.light_radiance = &light.light_radiance;
+    par.shadow_map = light.shadow_map;
+    //渲染器
+    MooRenderer renderer;
+
+    renderer.models.push_back(&model0);
+    renderer.models.push_back(&model1);
+    renderer.models.push_back(&model2);
+    renderer.models.push_back(&model3);
+    renderer.models.push_back(&model4);
+    renderer.models.push_back(&model5);
+    renderer.models.push_back(&model6);
+    renderer.models.push_back(&model7);
+    renderer.models.push_back(&model8);
+    renderer.models.push_back(&model9);
+    renderer.models.push_back(&model10);
+    renderer.models.push_back(&model11);
+    renderer.models.push_back(&model12);
+    renderer.models.push_back(&model13);
+    renderer.models.push_back(&model14);
+    renderer.models.push_back(&model15);
+    renderer.models.push_back(&model16);
+    renderer.models.push_back(&model17);
+    renderer.models.push_back(&model18);
+    renderer.models.push_back(&model19);
+    renderer.models.push_back(&model20);
+    renderer.models.push_back(&model21);
+    renderer.models.push_back(&model22);
+    renderer.point_lights.push_back(&light);
+
+    int key = 0;
+    int frame_num = 0;
+    int t = 0;
+
+    float dt = 0.0166667f;
+
+    int times = 1000;
+
+    array2d<vec3> x(times, 22);
+    array2d<mat3> R(times, 22);
+
+    std::ifstream infile;
+
+    infile.open("../resources/x.txt");
+    for(int i = 0; i < times; i++)
+    {
+        for(int j = 0; j < 22; j++)
+        {
+            infile >> x(i, j).x;
+        }
+        for(int j = 0; j < 22; j++)
+        {
+            infile >> x(i, j).y;
+        }
+        for(int j = 0; j < 22; j++)
+        {
+            infile >> x(i, j).z;
+        }
+    }
+    infile.close();
+
+    infile.open("../resources/R.txt");
+    for(int i = 0; i < times; i++)
+    {
+        for(int j = 0; j < 22; j++)
+        {
+            infile >> R(i, j).X.x;
+            infile >> R(i, j).Y.x;
+            infile >> R(i, j).Z.x;
+        }
+        for(int j = 0; j < 22; j++)
+        {
+            infile >> R(i, j).X.y;
+            infile >> R(i, j).Y.y;
+            infile >> R(i, j).Z.y;
+        }
+        for(int j = 0; j < 22; j++)
+        {
+            infile >> R(i, j).X.z;
+            infile >> R(i, j).Y.z;
+            infile >> R(i, j).Z.z;
+        }
+    }
+    infile.close();
+
+    cv::imshow("MOOLAB", fbo_to_img(&camera.fbo[0]));
+
+    while (key != 27 && t < times)
+    {
+        vec3 gamepadstick_left = gamepad_get_stick(GAMEPAD_STICK_LEFT);
+        vec3 gamepadstick_right = gamepad_get_stick(GAMEPAD_STICK_RIGHT);
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        camera.fbo[0].set(vec3(100.f, 100.f, 200.f), 100.f);
+
+        // camera.position = camera.position + 5.f * (quat(rad_to_deg(camera_controller.ang.x), vec3(0.f, 1.f, 0.f)) * (-gamepadstick_left)) * dt;
+        // camera_controller.dir_gamepad_control(gamepadstick_right, 0.1f);
+        // camera.update_orientation(vec3(0.f, 1.f, 0.f));
+        camera.position = vec3(0.f, x(t, 0).y, 5.f);
+
+        renderer.models[0]->transform = mat4(eye3(), renderer.point_lights[0]->light_position) * mat4(0.01f);
+        for(int i = 1; i < 23; i++)
+        {
+            if((i >= 2 && i <= 5) || (i >= 15 && i <= 18))
+            {
+                renderer.models[i]->transform = mat4(Rodrigues(t, vec3(0.f, 1.f, 0.f)), vec3()) *  mat4(eye3(), x(t, i - 1)) * mat4(R(t, i - 1), vec3()) * mat4(Rodrigues(0, vec3(0.f, 0.f, 1.f)), vec3()) * mat4(0.25f);
+            }
+            else if((i >= 6 && i <= 9) || (i >= 19 && i <= 22))
+            {
+                renderer.models[i]->transform = mat4(Rodrigues(t, vec3(0.f, 1.f, 0.f)), vec3()) *  mat4(eye3(), x(t, i - 1)) * mat4(R(t, i - 1), vec3()) * mat4(Rodrigues(0, vec3(0.f, 0.f, 1.f)), vec3()) * mat4(0.25f);
+            }
+            else
+            {
+                renderer.models[i]->transform = mat4(Rodrigues(t, vec3(0.f, 1.f, 0.f)), vec3()) *  mat4(eye3(), x(t, i - 1)) * mat4(R(t, i - 1), vec3()) * mat4(0.25f);
+            }
+        }
+        
+        draw(renderer.models[0], camera, &camera.fbo[0], &par, false);
+        for(int i = 1; i < 23; i++)
+        {
+            draw(renderer.models[i], camera, &camera.fbo[0], &par, false);
+        }
+        draw(renderer.models[0], camera, &camera.fbo[0], &par, true);
+        for(int i = 1; i < 23; i++)
+        {
+            draw(renderer.models[i], camera, &camera.fbo[0], &par, true);
+        }
+
+        cv::imshow("MOOLAB", fbo_to_img(&camera.fbo[0]));
+
+        std::cout << " Time: " << t << " Frame: " << frame_num 
+                  << std::endl;
+        frame_num++;
+        t++;
+        key = cv::waitKey(1);
+        EndDrawing();
+    }
+
+    CloseWindow();
+
+    return 0;
+}

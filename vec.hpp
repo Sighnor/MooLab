@@ -14,7 +14,7 @@ struct vec2
 
 static inline void print(const vec2 &v)
 {
-    printf("\n%f\n%f\n", v.x, v.y);
+    printf("%f, %f\n", v.x, v.y);
 }
 
 static inline vec2 operator + (vec2 v1, vec2 v2)
@@ -83,7 +83,7 @@ struct vec3
 
 static inline void print(const vec3 &v)
 {
-    printf("\n%f\n%f\n%f\n", v.x, v.y, v.z);
+    printf("%f, %f, %f\n", v.x, v.y, v.z);
 }
 
 static inline vec2 vec3_to_vec2(vec3 v)
@@ -214,7 +214,7 @@ struct vec4
 
 static inline void print(const vec4 &v)
 {
-    printf("\n%f\n%f\n%f\n%f\n", v.x, v.y, v.z, v.w);
+    printf("%f, %f, %f, %f\n", v.x, v.y, v.z, v.w);
 }
 
 static inline vec4 vec_to_vec4(vec3 v)

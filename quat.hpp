@@ -25,7 +25,7 @@ struct quat
 
 static inline void print(const quat &q)
 {
-    printf("\n%f\n%f\n%f\n%f\n", q.w, q.x, q.y, q.z);
+    printf("%f, %f, %f, %f\n", q.w, q.x, q.y, q.z);
 }
 
 static inline quat operator + (quat q1, quat q2)

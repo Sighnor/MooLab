@@ -364,8 +364,8 @@ Robot create_robot(float r, float h, int r_size, int h_size, int bones_size, flo
     for(int i = 0; i < r_size; i++)
     {
         robot.indices(3 * i + 0) = 0;
-        robot.indices(3 * i + 1) = i + 2;
-        robot.indices(3 * i + 2) = i + 1;
+        robot.indices(3 * i + 1) = circulate_int(i + 2, 1, r_size);
+        robot.indices(3 * i + 2) = circulate_int(i + 1, 1, r_size);
     }
 
     for(int i = 0; i < r_size; i++)

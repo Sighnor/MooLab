@@ -37,6 +37,7 @@ void Simulator::bind_simulator(const BVH_Motion &motion)
     bone_local_avels.zero();
     bone_masses.resize(size);
     bone_inertias.resize(size);
+    bone_inertias.set(1.f);
     bone_local_forces.resize(size);
     bone_local_torgues.resize(size);
     bone_local_torgues.zero();
@@ -47,15 +48,21 @@ void Simulator::bind_simulator(const BVH_Motion &motion)
 
 void Simulator::simulate_gravity()
 {
-    for(int i = 22; i < nbones(); i++)
+    for(int i = 11; i < 23; i++)
     {
         int parent_id = bone_parents(i);
+        int parent_parent_id = bone_parents(parent_id);
 
         if(((bone_anim_positions(parent_id) + bone_anim_positions(i)) / 2).y > 0.f)
         {
             vec3 r = 0.5f * (bone_anim_rotations(parent_id) * bone_local_positions(i));
-            vec3 g = vec3(0.f, 1.f, 0.f);
-            bone_local_torgues(parent_id) = bone_anim_rotations(parent_id) * cross(r, g);
+            vec3 g = vec3(0.f, -1.f, 0.f);
+            bone_local_torgues(parent_id) = 20.f * inv_quat(bone_anim_rotations(parent_parent_id)) * cross(r, g);
+            // print(inv_quat(bone_anim_rotations(parent_id)));
+        }
+        else
+        {
+            bone_local_avels(i) = 0.f;
         }
     }
 }
@@ -64,7 +71,7 @@ void Simulator::simulate(float dt = 0.0166667f)
 {
     for(int i = 1; i < nbones(); i++)
     {
-        bone_local_avels(i) = 5.f * bone_local_torgues(i);
+        bone_local_avels(i) = 0.f * bone_local_avels(i) + bone_local_torgues(i) / bone_inertias(i) * dt;
         bone_local_rotations(i) = avel_to_quat(bone_local_avels(i), dt) * bone_local_rotations(i);
     }
 }

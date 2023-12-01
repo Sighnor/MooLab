@@ -123,52 +123,97 @@ void rasterizer(MooShader &shader, FBO *fbo, bool ifdraw)
     mat4 modelview_matrix = shader.view_matrix * shader.model_matrix;
     mat4 projection_matrix = shader.projection_matrix;
 
-    #pragma omp parallel for 
-    for(int i = 0; i < shader.triangle_count; i++)
+    if(!ifdraw)
     {
-        vec4 v0 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[0]);
-        vec4 v1 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[1]);
-        vec4 v2 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[2]);
-
-        if(- v0.z < shader.z_near && - v1.z < shader.z_near && - v2.z < shader.z_near)
+        #pragma omp parallel for 
+        for(int i = 0; i < shader.triangle_count; i++)
         {
-            continue;
-        }
+            vec4 v0 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[0]);
+            vec4 v1 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[1]);
+            vec4 v2 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[2]);
 
-        vec4 p0 = standardize(projection_matrix * v0);
-        vec4 p1 = standardize(projection_matrix * v1);
-        vec4 p2 = standardize(projection_matrix * v2);
-
-        float max_x = clampf(0.5f * fbo->cols * (1.f + maxf_3(p0.x, p1.x, p2.x)), 0, fbo->cols - 1);
-        float min_x = clampf(0.5f * fbo->cols * (1.f + minf_3(p0.x, p1.x, p2.x)), 0, fbo->cols - 1);
-        float max_y = clampf(0.5f * fbo->rows * (1.f + maxf_3(p0.y, p1.y, p2.y)), 0, fbo->rows - 1);
-        float min_y = clampf(0.5f * fbo->rows * (1.f + minf_3(p0.y, p1.y, p2.y)), 0, fbo->rows - 1);
-
-        for(int x = min_x; x < max_x; x++)
-        {
-            for(int y = min_y; y < max_y; y++)
+            if(- v0.z < shader.z_near && - v1.z < shader.z_near && - v2.z < shader.z_near)
             {
-                int fbo_y = fbo->rows - 1 - (y + 0.5f);
-                int fbo_x = x + 0.5f;
+                continue;
+            }
 
-                vec2 p = vec2((x + 0.5f) * 2.f / fbo->cols - 1.f, (y + 0.5f) * 2.f / fbo->rows - 1.f);
+            vec4 p0 = standardize(projection_matrix * v0);
+            vec4 p1 = standardize(projection_matrix * v1);
+            vec4 p2 = standardize(projection_matrix * v2);
 
-                float alpha, beta, gamma;
-                bool flag = inside_2dtriangle(vec4_to_vec2(p0), vec4_to_vec2(p1), vec4_to_vec2(p2), p, alpha, beta, gamma);
+            float max_x = clampf(0.5f * fbo->cols * (1.f + maxf_3(p0.x, p1.x, p2.x)), 0, fbo->cols - 1);
+            float min_x = clampf(0.5f * fbo->cols * (1.f + minf_3(p0.x, p1.x, p2.x)), 0, fbo->cols - 1);
+            float max_y = clampf(0.5f * fbo->rows * (1.f + maxf_3(p0.y, p1.y, p2.y)), 0, fbo->rows - 1);
+            float min_y = clampf(0.5f * fbo->rows * (1.f + minf_3(p0.y, p1.y, p2.y)), 0, fbo->rows - 1);
 
-                float depth = -(alpha * v0.z + beta * v1.z + gamma * v2.z);
-
-                if(flag == true && depth <= fbo->getdepth(fbo_y, fbo_x) && depth > shader.z_near)
+            for(int x = min_x; x < max_x; x++)
+            {
+                for(int y = min_y; y < max_y; y++)
                 {
-                    fbo->getdepth(fbo_y, fbo_x) = depth;
+                    int fbo_y = fbo->rows - 1 - (y + 0.5f);
+                    int fbo_x = x + 0.5f;
 
-                    if(ifdraw == true)
+                    vec2 p = vec2((x + 0.5f) * 2.f / fbo->cols - 1.f, (y + 0.5f) * 2.f / fbo->rows - 1.f);
+
+                    float alpha, beta, gamma;
+                    bool flag = inside_2dtriangle(vec4_to_vec2(p0), vec4_to_vec2(p1), vec4_to_vec2(p2), p, alpha, beta, gamma);
+
+                    float depth = -(alpha * v0.z + beta * v1.z + gamma * v2.z);
+
+                    if(flag == true && depth <= fbo->getdepth(fbo_y, fbo_x) && depth > shader.z_near)
+                    {
+                        fbo->getdepth(fbo_y, fbo_x) = depth;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        #pragma omp parallel for 
+        for(int i = 0; i < shader.triangle_count; i++)
+        {
+            vec4 v0 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[0]);
+            vec4 v1 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[1]);
+            vec4 v2 = modelview_matrix * pos_to_vec4(shader.ver[i].vertex_pos[2]);
+
+            if(- v0.z < shader.z_near && - v1.z < shader.z_near && - v2.z < shader.z_near)
+            {
+                continue;
+            }
+
+            vec4 p0 = standardize(projection_matrix * v0);
+            vec4 p1 = standardize(projection_matrix * v1);
+            vec4 p2 = standardize(projection_matrix * v2);
+
+            float max_x = clampf(0.5f * fbo->cols * (1.f + maxf_3(p0.x, p1.x, p2.x)), 0, fbo->cols - 1);
+            float min_x = clampf(0.5f * fbo->cols * (1.f + minf_3(p0.x, p1.x, p2.x)), 0, fbo->cols - 1);
+            float max_y = clampf(0.5f * fbo->rows * (1.f + maxf_3(p0.y, p1.y, p2.y)), 0, fbo->rows - 1);
+            float min_y = clampf(0.5f * fbo->rows * (1.f + minf_3(p0.y, p1.y, p2.y)), 0, fbo->rows - 1);
+
+            for(int x = min_x; x < max_x; x++)
+            {
+                for(int y = min_y; y < max_y; y++)
+                {
+                    int fbo_y = fbo->rows - 1 - (y + 0.5f);
+                    int fbo_x = x + 0.5f;
+
+                    vec2 p = vec2((x + 0.5f) * 2.f / fbo->cols - 1.f, (y + 0.5f) * 2.f / fbo->rows - 1.f);
+
+                    float alpha, beta, gamma;
+                    bool flag = inside_2dtriangle(vec4_to_vec2(p0), vec4_to_vec2(p1), vec4_to_vec2(p2), p, alpha, beta, gamma);
+
+                    float depth = -(alpha * v0.z + beta * v1.z + gamma * v2.z);
+
+                    if(flag == true && depth == fbo->getdepth(fbo_y, fbo_x))
                     {
                         switch (shader.shader_type)
                         {
                             case LIGHT:
                             {
-                                fbo->getcolor(fbo_y, fbo_x) = clampv(255.f * shader.light_radiance);
+                                vec3 color;
+                                color = 255.f * shader.light_radiance;
+                                fbo->getcolor(fbo_y, fbo_x) = clampv(color);
                                 break;
                             }
                             case PBR:

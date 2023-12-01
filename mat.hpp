@@ -14,7 +14,7 @@ struct mat3
 
 static inline void print(const mat3 &m)
 {
-    printf("\n%f, %f, %f\n", m.X.x, m.Y.x, m.Z.x);
+    printf("%f, %f, %f\n", m.X.x, m.Y.x, m.Z.x);
     printf("%f, %f, %f\n", m.X.y, m.Y.y, m.Z.y);
     printf("%f, %f, %f\n", m.X.z, m.Y.z, m.Z.z);
 }
