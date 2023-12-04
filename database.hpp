@@ -85,7 +85,7 @@ int Database_search(
 {
     int best_frame = 0;
     float best_delta = 10000.f;
-    for (int i = 0; i < db.nframes() - 1.5 * N; i++)
+    for(int i = 0; i < db.nframes() - 1.5 * N; i++)
     {
         if(contact == db.contacts(i))
         {

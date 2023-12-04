@@ -30,6 +30,7 @@ struct Camera_Controller
             float dt, 
             vec3 input);
 
+    void pos_gamepad_control(vec3 input);
     void dir_gamepad_control(vec3 input, float k);
 };
 
@@ -82,6 +83,12 @@ void Camera_Controller::dir_pid_control(
     ang.y = circulate_float(ang.y, 0.f, PI);
 
     *dir = sph_to_dir(ang);
+}
+
+void Camera_Controller::pos_gamepad_control(vec3 input)
+{
+    // 默认方向为(0, 0, 1)，故默认向量为(0, 0 , -1)；
+    *pos = input + quat(rad_to_deg(ang.x), vec3(0.f, 1.f, 0.f)) * vec3(0.f, 0.f, -3.f);
 }
 
 void Camera_Controller::dir_gamepad_control(vec3 input, float k)

@@ -205,5 +205,11 @@ static inline quat avel_to_quat(vec3 avel, float t)
     return quat(theta, avel);
 }
 
+static inline mat3 quat_to_Rodrigues(quat q)
+{
+    float theta = rad_to_deg(2 * acos(clampf(q.w, -1.f, 1.f)));
+    vec3 omega = normalize(vec3(q.x, q.y, q.z));
+    return Rodrigues(theta, omega);
+}
 
 #endif

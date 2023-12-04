@@ -195,7 +195,7 @@ array1d<float> LFPB(const slice1d<float> points, const slice1d<float> td, float 
     array1d<float> vel(points.size);
 
     t(0) = 0;
-    for (int i = 1;i < points.size; i++)
+    for(int i = 1;i < points.size; i++)
     {
         t(i) = t(i - 1) + td(i - 1);
     }
@@ -203,7 +203,7 @@ array1d<float> LFPB(const slice1d<float> points, const slice1d<float> td, float 
     array1d<float> curve_points(t(points.size - 1) / mSampleTime + 1);
 
     //初始加速度和结束加速度的方向
-    if (points(1) == points(0))
+    if(points(1) == points(0))
     {
         acc(0) = 0;
         tb(0) = 0;
@@ -213,7 +213,7 @@ array1d<float> LFPB(const slice1d<float> points, const slice1d<float> td, float 
         acc(0) = sgn(points(1) - points(0)) * acc_value;
         tb(0) = td(0) - sqrt(td(0) * td(0) - 2 * (points(1) - points(0)) / acc(0));
     }
-    if (points(points.size - 2) == points(points.size - 1))
+    if(points(points.size - 2) == points(points.size - 1))
     {
         acc(points.size - 1) = 0;
         tb(points.size - 1) = 0;
@@ -227,14 +227,14 @@ array1d<float> LFPB(const slice1d<float> points, const slice1d<float> td, float 
     vel(0) = (points(1) - points(0)) / (td(0) - 0.5 * tb(0));
     vel((points.size - 2)) = (points(points.size - 1) - points(points.size - 2)) / (td(points.size - 2) - 0.5 * tb(points.size - 1));
     //计算剩下每段的直线速度
-    for (int i = 1;i < points.size - 2;i++)
+    for(int i = 1;i < points.size - 2;i++)
     {
         vel(i) = (points(i + 1) - points(i)) / td(i);
     }
     //计算剩下每段的加速度和加速时间
-    for (int i = 1;i < points.size - 1;i++)
+    for(int i = 1;i < points.size - 1;i++)
     {
-        if (vel(i) == vel((i - 1)))
+        if(vel(i) == vel((i - 1)))
         {
             acc(i) = 0;
             tb(i) = 0;
@@ -246,23 +246,23 @@ array1d<float> LFPB(const slice1d<float> points, const slice1d<float> td, float 
         }
     }
     // //位移补偿量
-    for (int k = 1;k < points.size - 1;k++)
+    for(int k = 1;k < points.size - 1;k++)
     {
         points(k) = points(k) + 0.5 * acc(k) * tb(k) * tb(k);
     }
     //计算每个时刻的角度
-    for (int k = 0;k < points.size - 1;k++)
+    for(int k = 0;k < points.size - 1;k++)
     {
         //ceil向上取整，保证大于对应函数范围下界
-        for (int i = ceil(t(k) / mSampleTime);i < (t(k) + tb(k)) / mSampleTime;i++)
+        for(int i = ceil(t(k) / mSampleTime);i < (t(k) + tb(k)) / mSampleTime;i++)
         {
             LFPB_function0(curve_points(i), points(k), vel(k), acc(k), t(k), tb(k), i * mSampleTime);
         }
-        for (int i = ceil((t(k) + tb(k)) / mSampleTime);i < (t(k + 1) - tb((k + 1))) / mSampleTime;i++)
+        for(int i = ceil((t(k) + tb(k)) / mSampleTime);i < (t(k + 1) - tb((k + 1))) / mSampleTime;i++)
         {
             LFPB_function1(curve_points(i), points(k), vel(k), acc(k), t(k), tb(k), i * mSampleTime);
         }
-        for (int i = ceil((t(k + 1) - tb((k + 1))) / mSampleTime);i < t(k + 1) / mSampleTime;i++)
+        for(int i = ceil((t(k + 1) - tb((k + 1))) / mSampleTime);i < t(k + 1) / mSampleTime;i++)
         {
             LFPB_function2(curve_points(i), points(k + 1), vel(k), acc(k + 1), t(k + 1), tb(k + 1), i * mSampleTime);
         }

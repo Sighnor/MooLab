@@ -29,6 +29,11 @@ static inline mat3 operator + (mat3 m1, mat3 m2)
     return mat3(m1.X + m2.X, m1.Y + m2.Y, m1.Z + m2.Z);
 }
 
+static inline mat3 operator - (mat3 m1)
+{
+    return mat3(- m1.X, - m1.Y, - m1.Z);
+}
+
 static inline mat3 operator - (mat3 m1, mat3 m2)
 {
     return mat3(m1.X - m2.X, m1.Y - m2.Y, m1.Z - m2.Z);
@@ -83,6 +88,23 @@ static inline float determine(const mat3 &m)
     return (m.X.x * (m.Y.y * m.Z.z - m.Y.z * m.Z.y)
           + m.Y.x * (m.Z.y * m.X.z - m.Z.z * m.X.y)
           + m.Z.x * (m.X.y * m.Y.z - m.X.z * m.Y.y));
+}
+
+static inline mat3 trans_mat(mat3 m)
+{
+    vec3 X = vec3(
+                m.X.x, 
+                m.Y.x, 
+                m.Z.x);
+    vec3 Y = vec3(
+                m.X.y, 
+                m.Y.y, 
+                m.Z.y);
+    vec3 Z = vec3(
+                m.X.z, 
+                m.Y.z, 
+                m.Z.z);            
+    return mat3(X, Y, Z);
 }
 
 static inline mat3 inv_mat(mat3 m, float eps = 1e-8f)
