@@ -15,146 +15,99 @@ end
 array_links = [1, 2, 3, 4, 1, 6, 7, 8, 1, 10, 11, 12, 13, 12, 15, 16, 17, 12, 19, 20, 21; 
                2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
 
-array_rl = zeros(2, num_bones);
-array_rl(1:2, 1) = [0.5 * 0.0738, 0.0738]';
-array_rl(1:2, 2) = [0.5 * 0.1, 0.435]';
-array_rl(1:2, 3) = [0.5 * 0.1, 0.4237]';
-array_rl(1:2, 4) = [0.5 * 0.1, 0.173]';
-array_rl(1:2, 5) = [0.5 * 0.05, 0.05]';
-array_rl(1:2, 6) = [0.5 * 0.1, 0.435]';
-array_rl(1:2, 7) = [0.5 * 0.1, 0.4237]';
-array_rl(1:2, 8) = [0.5 * 0.1, 0.173]';
-array_rl(1:2, 9) = [0.5 * 0.05, 0.05]';
-array_rl(1:2, 10) = [0.5 * 0.12, 0.1259]';
-array_rl(1:2, 11) = [0.5 * 0.12, 0.1234]';
-array_rl(1:2, 12) = [0.5 * 0.12, 0.2583]';
-array_rl(1:2, 13) = [0.5 * 0.10, 0.1177]';
-array_rl(1:2, 14) = [0.5 * 0.15, 0.25]';
-array_rl(1:2, 15) = [0.5 * 0.1128, 0.2583]';
-array_rl(1:2, 16) = [0.5 * 0.1, 0.33]';
-array_rl(1:2, 17) = [0.5 * 0.1, 0.252]';
-array_rl(1:2, 18) = [0.5 * 0.1, 0.2]';
-array_rl(1:2, 19) = [0.5 * 0.1128, 0.2583]';
-array_rl(1:2, 20) = [0.5 * 0.1, 0.33]';
-array_rl(1:2, 21) = [0.5 * 0.1, 0.252]';
-array_rl(1:2, 22) = [0.5 * 0.1, 0.2]';
+array_rl = [0.0737676, 0.147535
+            0.05, 0.435
+            0.05, 0.423722
+            0.05, 0.173
+            0.05, 0.1
+            0.05, 0.435
+            0.05, 0.423723
+            0.05, 0.173
+            0.05, 0.1
+            0.05, 0.125881
+            0.05, 0.123432
+            0.0921054, 0.184211
+            0.05, 0.117666
+            0.05, 0.1
+            0.05, 0.112841
+            0.05, 0.33
+            0.05, 0.252
+            0.05, 0.1
+            0.05, 0.112841
+            0.05, 0.330001
+            0.05, 0.251998
+            0.05, 0.1]';
 
 array_vt = zeros(3, num_bones);
 array_wt = zeros(3, num_bones);
 
-array_xt = zeros(3, num_bones);
+array_xt = [1.462166, 0.919905, 1.697146
+            1.436350, 0.702888, 1.802441
+            1.470852, 0.277256, 1.797920
+            1.439985, 0.038203, 1.833627
+            1.326714, 0.007802, 1.899035
+            1.424037, 0.704069, 1.593481
+            1.443157, 0.281105, 1.573710
+            1.403906, 0.043109, 1.550929
+            1.273307, 0.011886, 1.549538
+            1.477335, 1.051999, 1.696907
+            1.457282, 1.174951, 1.693726
+            1.417589, 1.361337, 1.683523
+            1.382956, 1.545257, 1.681889
+            1.371319, 1.653129, 1.688010
+            1.414095, 1.422591, 1.795496
+            1.408393, 1.255017, 1.902302
+            1.340763, 0.987980, 1.966217
+            1.262979, 0.833872, 1.994583
+            1.435203, 1.412851, 1.568202
+            1.476265, 1.241225, 1.469278
+            1.454182, 0.972141, 1.400561
+            1.389532, 0.813745, 1.361966]';
 
-% array_xt(:, 1) = [0, 0, 0]';
-% array_xt(:, 2) = [-1, 0, 0]';
-% array_xt(:, 3) = [-2, 0, 0]';
-% array_xt(:, 4) = [-3, 0, 0]';
-% array_xt(:, 5) = [-4, 0, 0]';
-% array_xt(:, 6) = [1, 0, 0]';
-% array_xt(:, 7) = [2, 0, 0]';
-% array_xt(:, 8) = [3, 0, 0]';
-% array_xt(:, 9) = [4, 0, 0]';
-% array_xt(:, 10) = [0, 1, 0]';
-% array_xt(:, 11) = [0, 2, 0]';
-% array_xt(:, 12) = [0, 3, 0]';
-% array_xt(:, 13) = [0, 4, 0]';
-% array_xt(:, 14) = [0, 5, 0]';
-% array_xt(:, 15) = [-1, 3, 0]';
-% array_xt(:, 16) = [-2, 3, 0]';
-% array_xt(:, 17) = [-3, 3, 0]';
-% array_xt(:, 18) = [-4, 3, 0]';
-% array_xt(:, 19) = [1, 3, 0]';
-% array_xt(:, 20) = [2, 3, 0]';
-% array_xt(:, 21) = [3, 3, 0]';
-% array_xt(:, 22) = [4, 3, 0]';
+array_Rt = quat_to_R([0.698039, -0.015116, -0.015336, 0.715736
+                        0.000509, -0.992820, 0.010410, 0.119163
+                        -0.007395, -0.975234, -0.092919, 0.200574
+                        -0.151344, -0.796942, 0.546476, 0.208189
+                        -0.187468, -0.681292, 0.685259, 0.176399
+                        -0.002935, -0.997698, 0.051357, 0.044177
+                        0.050637, -0.993646, -0.099079, 0.016943
+                        -0.000043, -0.825430, 0.564450, -0.007744
+                        0.001418, -0.705942, 0.708227, -0.007635
+                        0.997355, -0.005664, -0.018948, 0.069950
+                        0.995108, -0.015846, -0.031271, 0.092364
+                        0.992417, -0.025890, -0.043647, 0.111954
+                        0.996422, 0.055409, -0.038440, 0.050945
+                        0.994515, 0.003403, -0.089432, 0.054127
+                        0.080456, 0.060615, -0.628919, -0.770917
+                        0.030738, 0.342571, -0.157358, -0.925710
+                        -0.206148, 0.361751, -0.137596, -0.898725
+                        -0.056173, 0.574256, -0.246902, -0.778533
+                        0.135445, 0.007370, 0.584458, -0.800006
+                        0.123668, -0.277796, 0.111913, -0.946050
+                        -0.169047, -0.288965, 0.148188, -0.930571
+                        -0.073603, -0.363219, 0.207986, -0.905205]');
 
-array_xt(:, 1) = [0, 0, 0]';
-array_xt(:, 2) = [0.5 * 0.211, -0.5 * array_rl(2, 1) - 0.5 * array_rl(2, 2), 0]';
-array_xt(:, 3) = [0.5 * 0.211, -0.5 * array_rl(2, 1) - 1 * array_rl(2, 2) - 0.5 * array_rl(2, 3), 0]';
-array_xt(:, 4) = [0.5 * 0.211, -0.5 * array_rl(2, 1) - 1 * array_rl(2, 2) - 1 * array_rl(2, 3) - 0.5 * array_rl(2, 4), 0]';
-array_xt(:, 5) = [0.5 * 0.211, -0.5 * array_rl(2, 1) - 1 * array_rl(2, 2) - 1 * array_rl(2, 3) - 1 * array_rl(2, 4) - 0.5 * array_rl(2, 5), 0]';
-array_xt(:, 6) = [-0.5 * 0.211, -0.5 * array_rl(2, 1) - 0.5 * array_rl(2, 6), 0]';
-array_xt(:, 7) = [-0.5 * 0.211, -0.5 * array_rl(2, 1) - 1 * array_rl(2, 6) - 0.5 * array_rl(2, 7), 0]';
-array_xt(:, 8) = [-0.5 * 0.211, -0.5 * array_rl(2, 1) - 1 * array_rl(2, 6) - 1 * array_rl(2, 7) - 0.5 * array_rl(2, 8), 0]';
-array_xt(:, 9) = [-0.5 * 0.211, -0.5 * array_rl(2, 1) - 1 * array_rl(2, 6) - 1 * array_rl(2, 7) - 1 * array_rl(2, 8) - 0.5 * array_rl(2, 9), 0]';
-array_xt(:, 10) = [0, 0.5 * array_rl(2, 1) + 0.5 * array_rl(2, 10), 0]';
-array_xt(:, 11) = [0, 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 0.5 * array_rl(2, 11), 0]';
-array_xt(:, 12) = [0, 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 0.5 * array_rl(2, 12), 0]';
-array_xt(:, 13) = [0, 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 1 * array_rl(2, 12) + 0.5 * array_rl(2, 13), 0]';
-array_xt(:, 14) = [0, 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 1 * array_rl(2, 12) + 1 * array_rl(2, 13) + 0.5 * array_rl(2, 14), 0]';
-array_xt(:, 15) = [array_rl(1, 12) + array_rl(1, 15), 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 0.5 * array_rl(2, 15), 0]';
-array_xt(:, 16) = [array_rl(1, 12) + 1 * 0.1128 + 0.5 * array_rl(2, 16), 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 0.5 * array_rl(2, 15), 0]';
-array_xt(:, 17) = [array_rl(1, 12) + 1 * 0.1128 + 1 * array_rl(2, 16) + 0.5 * array_rl(2, 17), 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 0.5 * array_rl(2, 15), 0]';
-array_xt(:, 18) = [array_rl(1, 12) + 1 * 0.1128 + 1 * array_rl(2, 16) + 1 * array_rl(2, 17) + 0.5 * array_rl(2, 18), 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 0.5 * array_rl(2, 15), 0]';
-array_xt(:, 19) = [-array_rl(1, 12) - array_rl(1, 19), 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 0.5 * array_rl(2, 19), 0]';
-array_xt(:, 20) = [-array_rl(1, 12) - 1 * 0.1128 - 0.5 * array_rl(2, 20), 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 0.5 * array_rl(2, 19), 0]';
-array_xt(:, 21) = [-array_rl(1, 12) - 1 * 0.1128 - 1 * array_rl(2, 20) - 0.5 * array_rl(2, 21), 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 0.5 * array_rl(2, 19), 0]';
-array_xt(:, 22) = [-array_rl(1, 12) - 1 * 0.1128 - 1 * array_rl(2, 20) - 1 * array_rl(2, 21) - 0.5 * array_rl(2, 22), 0.5 * array_rl(2, 1) + 1 * array_rl(2, 10) + 1 * array_rl(2, 11) + 0.5 * array_rl(2, 19), 0]';
-
-% array_xt = textread('X0.txt')';
-
-array_Rt = zeros(3, 3 * num_bones);
-for i = 1:num_bones
-    array_Rt(:, 3 * i - 2:3 * i) = eye(3);
-end
-
-for i = 16:18
-    array_Rt(:, 3 * i - 2:3 * i) = Rodrigues(-90, [0, 0, 1]);
-end
-for i = 20:22
-    array_Rt(:, 3 * i - 2:3 * i) = Rodrigues(90, [0, 0, 1]);
-end
-
-% array_Rt = quat_to_R(textread('R0.txt')');
-
-array_rt = zeros(3 * 2, num_links);
-
-% for j = 1:num_links
-%     array_rt(1:3, j) = 0.5 * (array_xt(:, array_links(2, j)) - array_xt(:, array_links(1, j)));
-%     array_rt(4:6, j) = 0.5 * (array_xt(:, array_links(1, j)) - array_xt(:, array_links(2, j)));
-% end
-
-array_rt(1:3, 1) = [0.5 * 0.211, -0.5 * array_rl(2, 1), 0];
-array_rt(4:6, 1) = [0, 0.5 * array_rl(2, 2), 0];
-array_rt(1:3, 2) = [0, -0.5 * array_rl(2, 2), 0];
-array_rt(4:6, 2) = [0, 0.5 * array_rl(2, 3), 0];
-array_rt(1:3, 3) = [0, -0.5 * array_rl(2, 3), 0];
-array_rt(4:6, 3) = [0, 0.5 * array_rl(2, 4), 0];
-array_rt(1:3, 4) = [0, -0.5 * array_rl(2, 4), 0];
-array_rt(4:6, 4) = [0, 0.5 * array_rl(2, 5), 0];
-array_rt(1:3, 5) = [-0.5 * 0.211, -0.5 * array_rl(2, 1), 0];
-array_rt(4:6, 5) = [0, 0.5 * array_rl(2, 6), 0];
-array_rt(1:3, 6) = [0, -0.5 * array_rl(2, 6), 0];
-array_rt(4:6, 6) = [0, 0.5 * array_rl(2, 7), 0];
-array_rt(1:3, 7) = [0, -0.5 * array_rl(2, 7), 0];
-array_rt(4:6, 7) = [0, 0.5 * array_rl(2, 8), 0];
-array_rt(1:3, 8) = [0, -0.5 * array_rl(2, 8), 0];
-array_rt(4:6, 8) = [0, 0.5 * array_rl(2, 9), 0];
-array_rt(1:3, 9) = [0, 0.5 * array_rl(2, 1), 0];
-array_rt(4:6, 9) = [0, -0.5 * array_rl(2, 10), 0];
-array_rt(1:3, 10) = [0, 0.5 * array_rl(2, 10), 0];
-array_rt(4:6, 10) = [0, -0.5 * array_rl(2, 11), 0];
-array_rt(1:3, 11) = [0, 0.5 * array_rl(2, 11), 0];
-array_rt(4:6, 11) = [0, -0.5 * array_rl(2, 12), 0];
-array_rt(1:3, 12) = [0, 0.5 * array_rl(2, 12), 0];
-array_rt(4:6, 12) = [0, -0.5 * array_rl(2, 13), 0];
-array_rt(1:3, 13) = [0, 0.5 * array_rl(2, 13), 0];
-array_rt(4:6, 13) = [0, -0.5 * array_rl(2, 14), 0];
-array_rt(1:3, 14) = [array_rl(1, 12), 0, 0];
-array_rt(4:6, 14) = [-array_rl(1, 15), 0, 0];
-array_rt(1:3, 15) = [array_rl(1, 15), 0, 0];
-array_rt(4:6, 15) = [-0.5 * array_rl(2, 16), 0, 0];
-array_rt(1:3, 16) = [0.5 * array_rl(2, 16), 0, 0];
-array_rt(4:6, 16) = [-0.5 * array_rl(2, 17), 0, 0];
-array_rt(1:3, 17) = [0.5 * array_rl(2, 17), 0, 0];
-array_rt(4:6, 17) = [-0.5 * array_rl(2, 18), 0, 0];
-array_rt(1:3, 18) = [-array_rl(1, 12), 0, 0];
-array_rt(4:6, 18) = [array_rl(1, 19), 0, 0];
-array_rt(1:3, 19) = [-array_rl(1, 19), 0, 0];
-array_rt(4:6, 19) = [0.5 * array_rl(2, 20), 0, 0];
-array_rt(1:3, 20) = [-0.5 * array_rl(2, 20), 0, 0];
-array_rt(4:6, 20) = [0.5 * array_rl(2, 21), 0, 0];
-array_rt(1:3, 21) = [-0.5 * array_rl(2, 21), 0, 0];
-array_rt(4:6, 21) = [0.5 * array_rl(2, 22), 0, 0];
+array_rt = [-0.0212939, 0.000435531, 0.104975, 0.00452244, 0.217453, -0.000319958
+            -0.00452232, -0.217453, 0.000319958, -0.0390252, 0.208179, 0.00484097
+            0.0390252, -0.208179, -0.00484085, 0.0698923, 0.0308735, -0.0405481
+            -0.0698923, -0.0308735, 0.0405482, 0.0433793, -0.000472443, -0.0248599
+            -0.015896, 0.000513136, -0.105926, 0.0222325, 0.216349, -0.0022608
+            -0.0222327, -0.216349, 0.00226092, -0.0413519, 0.206615, 0.0220311
+            0.041352, -0.206615, -0.0220311, 0.0806031, 0.0313814, 0.000750065
+            -0.0806032, -0.0313814, -0.000750065, 0.0499957, -0.000158796, 0.00064075
+            0.0239373, 0.0697729, 0.000638366, 0.00876856, -0.0623205, 0.000877857
+            -0.00876856, 0.0623206, -0.000877976, 0.0112838, -0.060632, 0.00230289
+            -0.0112838, 0.060632, -0.00230289, 0.0284096, -0.125754, 0.00789976
+            -0.0284096, 0.125754, -0.00789976, 0.00622368, -0.0581664, -0.006266
+            -0.00622356, 0.0581664, 0.00626588, 0.00541341, -0.0497059, 0.000145674
+            -0.00619102, 0.0723109, 0.0567117, -0.00269735, 0.011057, -0.0552608
+            0.00269723, -0.011057, 0.0552609, 0.00839925, 0.156517, -0.0515454
+            -0.00839925, -0.156517, 0.0515454, 0.0592315, 0.11052, -0.0123698
+            -0.0592316, -0.11052, 0.0123698, 0.0185517, 0.0435884, -0.0159963
+            0.00490034, 0.0673189, -0.062672, -0.0127132, 0.015805, 0.0526485
+            0.0127132, -0.015805, -0.0526485, -0.0283494, 0.15582, 0.0462761
+            0.0283494, -0.15582, -0.0462761, 0.0504327, 0.113264, 0.0224407
+            -0.0504326, -0.113264, -0.0224407, 0.0142177, 0.0451321, 0.0161539]';
 
 array_delta = zeros(3, num_links);
 
@@ -171,96 +124,126 @@ for i = 1:times
     J = zeros(3 * num_links, 6 * num_bones);
     delta = zeros(3 * num_links, 1);
 
+%         添加重力
     for j = 1:num_bones
-        array_It(:, 3 * j - 2:3 * j) = array_Rt(:, 3 * j - 2:3 * j) * array_I(:, 3 * j - 2:3 * j) * array_Rt(:, 3 * j - 2:3 * j)';
-
-        F(6 * j - 5:6 * j - 3) = [0, 9.8 * (-array_m(j)), 0]';
-        F(6 * j - 2:6 * j) = [0, 0, 0]' - cross(array_wt(:, j), array_It(:, 3 * j - 2:3 * j) * array_wt(:, j));
-
-        vt(6 * j - 5:6 * j - 3) = array_vt(:, j);
-        vt(6 * j - 2:6 * j) = array_wt(:, j);
-
-        M(6 * j - 5:6 * j - 3, 6 * j - 5:6 * j - 3) = 1 / h * array_m(j) * eye(3);
-        M(6 * j - 2:6 * j, 6 * j - 2:6 * j) = 1 / h * array_It(:, 3 * j - 2:3 * j);
+        F(6 * j - 5:6 * j - 3) = F(6 * j - 5:6 * j - 3) + [0, 9.8 * (-array_m(j)), 0]';
     end
 
-%     F(6 * 5 - 5:6 * 5 - 3) = [0, 0.33 * 2, 0]';
+    for j = 1:num_bones
+%         添加阻尼
+        F(6 * j - 5:6 * j - 3) = F(6 * j - 5:6 * j - 3) - 0.5 * array_m(j) * array_vt(:, j);
+        F(6 * j - 2:6 * j) = F(6 * j - 2:6 * j) - 0.5 * array_m(j) * array_wt(:, j);
+    end
+
+%     更新拉力
+%     F(6 * 18 - 5:6 * 18 - 3) = F(6 * 18 - 5:6 * 18 - 3) + [0, 9.8 * 22, 0]';
 %     F(6 * 9 - 5:6 * 9 - 3) = [0, 0.33 * 2, 0]';
-%     F(6 * 14 - 5:6 * 14 - 3) = F(6 * 14 - 5:6 * 14 - 3) + [0, 9.8 * 22.5, 0]';
-%     F(6 * 18 - 5:6 * 18 - 3) = F(6 * 18 - 5:6 * 18 - 3) + [-5, 0, 0]';
+%     F(6 * 14 - 5:6 * 14 - 3) = F(6 * 14 - 5:6 * 14 - 3) + [0, 9.8 * 22, 0]';
+% 
+%     F(6 * 1 - 5:6 * 1 - 3) = F(6 * 1 - 5:6 * 1 - 3) + [0, 0, sin(180 * i / pi)]';
 
-    if i < 50
-        F(6 * 14 - 5:6 * 14 - 3) = F(6 * 14 - 5:6 * 14 - 3) + [10, 0, 0]';
+    if i < 500
+%         F(6 * 14 - 5:6 * 14 - 3) = F(6 * 14 - 5:6 * 14 - 3) + [0, 9.8 * 5, 0]';
+%         F(6 * 14 - 5:6 * 14 - 3) = F(6 * 14 - 5:6 * 14 - 3) + [0, 9.8 * 22, 0]';
+%         F(6 * 18 - 5:6 * 18 - 3) = F(6 * 18 - 5:6 * 18 - 3) + [20, 0, 0]';
+%         F(6 * 9 - 5:6 * 9 - 3) = F(6 * 9 - 5:6 * 9 - 3) + [-20, 0, 0]';
+    elseif i < 600
+%         F(6 * 14 - 5:6 * 14 - 3) = F(6 * 14 - 5:6 * 14 - 3) + [0, 0, 10]';
     end
 
+%     碰撞检测
     for j = 1:num_bones
         eps = 1e-2;
         p1 = array_xt(:, j) + array_Rt(:, 3 * j - 2:3 * j) * [0, 0.5 * array_rl(2, j) - array_rl(1, j), 0]';
         p2 = array_xt(:, j) - array_Rt(:, 3 * j - 2:3 * j) * [0, 0.5 * array_rl(2, j) - array_rl(1, j), 0]';
+%     刚体与刚体检测
         for k = j + 1:num_bones
             q1 = array_xt(:, k) + array_Rt(:, 3 * k - 2:3 * k) * [0, 0.5 * array_rl(2, k) - array_rl(1, k), 0]';
             q2 = array_xt(:, k) - array_Rt(:, 3 * k - 2:3 * k) * [0, 0.5 * array_rl(2, k) - array_rl(1, k), 0]';
             [lambda1, lambda2, distance] = distance_between_line_segments(p1, p2, q1, q2);
             if distance < array_rl(1, j) + array_rl(1, k) - eps
-                mag_F = 1000 * (array_rl(1, j) + array_rl(1, k) - eps - distance);
-                mag_tao = 1000 * (array_rl(1, j) + array_rl(1, k) - eps - distance);
+                kp = 10000;
+                kd = 0.5;
+
                 p = p1 + lambda1 * (p2 - p1);
                 q = q1 + lambda2 * (q2 - q1);
-                F(6 * j - 5:6 * j - 3) = F(6 * j - 5:6 * j - 3) + mag_F * normalize(p - q);
-                F(6 * j - 2:6 * j) = F(6 * j - 2:6 * j) + mag_tao * cross(p - array_xt(:, j), normalize(p - q));
-                F(6 * k - 5:6 * k - 3) = F(6 * k - 5:6 * k - 3) + mag_F * normalize(q - p);
-                F(6 * k - 2:6 * k) = F(6 * k - 2:6 * k) + mag_tao * cross(q - array_xt(:, k), normalize(q - p));
+                vp = (array_vt(:, j) + cross(array_wt(:, j), p - array_xt(:, j)));
+                vq = (array_vt(:, k) + cross(array_wt(:, k), q - array_xt(:, k)));
+
+                length_Fp = kp * (array_rl(1, j) + array_rl(1, k) - eps - distance) + kd * dot(vp, q - p) / max(norm(q - p), 1e-8);
+                length_Fq = kp * (array_rl(1, j) + array_rl(1, k) - eps - distance) + kd * dot(vq, p - q) / max(norm(p - q), 1e-8);
+
+                F(6 * j - 5:6 * j - 3) = F(6 * j - 5:6 * j - 3) + length_Fp * normalize(p - q);
+                F(6 * j - 2:6 * j) = F(6 * j - 2:6 * j) + length_Fp * cross(p - array_xt(:, j), normalize(p - q));
+                F(6 * k - 5:6 * k - 3) = F(6 * k - 5:6 * k - 3) + length_Fq * normalize(q - p);
+                F(6 * k - 2:6 * k) = F(6 * k - 2:6 * k) + length_Fq * cross(q - array_xt(:, k), normalize(q - p));
             end
         end
-        [lambda, distance] = distance_between_line_segment_plane(p1, p2, 0, 1, 0, 1.1);
+%     地面碰撞检测
+        [lambda, distance] = distance_between_line_segment_plane(p1, p2, 0, 1, 0, 0);
         if distance < array_rl(1, j) - eps
-            magF = 1000 * (array_rl(1, j) - eps - distance);
-            mag_tao = 1000 * (array_rl(1, j) - eps - distance);
+            kp = 10000;
+            kd = 100;
+
             p = p1 + lambda * (p2 - p1);
-            F(6 * j - 5:6 * j - 3) = F(6 * j - 5:6 * j - 3) + mag_F * [0, 1, 0]';
-            F(6 * j - 2:6 * j) = F(6 * j - 2:6 * j) + mag_tao * cross(p - array_xt(:, j), [0, 1, 0]');
+            v = (array_vt(:, j) + cross(array_wt(:, j), p - array_xt(:, j)));
+
+            length_F = kp * (array_rl(1, j) - eps - distance) + kd * dot(v, [0, -1, 0]');
+
+            F(6 * j - 5:6 * j - 3) = F(6 * j - 5:6 * j - 3) + length_F * [0, 1, 0]';
+            F(6 * j - 2:6 * j) = F(6 * j - 2:6 * j) + length_F * cross(p - array_xt(:, j), [0, 1, 0]');
         end
     end
 
+    for j = 1:num_bones
+%         计算实时转动惯量矩阵
+        array_It(:, 3 * j - 2:3 * j) = array_Rt(:, 3 * j - 2:3 * j) * array_I(:, 3 * j - 2:3 * j) * array_Rt(:, 3 * j - 2:3 * j)';
+%         更新转动惯量阻力
+        F(6 * j - 2:6 * j) = F(6 * j - 2:6 * j) - cross(array_wt(:, j), array_It(:, 3 * j - 2:3 * j) * array_wt(:, j));
+%         更新速度
+        vt(6 * j - 5:6 * j - 3) = array_vt(:, j);
+        vt(6 * j - 2:6 * j) = array_wt(:, j);
+%         更新M矩阵
+        M(6 * j - 5:6 * j - 3, 6 * j - 5:6 * j - 3) = 1 / h * array_m(j) * eye(3);
+        M(6 * j - 2:6 * j, 6 * j - 2:6 * j) = 1 / h * array_It(:, 3 * j - 2:3 * j);
+    end
+
+%     计算实时误差和约束矩阵
     total_delta = 0;
     for j = 1:num_links
         id1 = array_links(1, j);
         id2 = array_links(2, j);
         array_delta(:, j) = array_xt(:, id1) + array_rt(1:3, j) - array_xt(:, id2) - array_rt(4:6, j);
-        total_delta = total_delta + norm(array_xt(:, id1) + array_rt(1:3, j) - array_xt(:, id2) - array_rt(4:6, j));
-    end
-    total_delta
-    
-    for j = 1:num_links
-        id1 = array_links(1, j);
-        id2 = array_links(2, j);
         J(3 * j - 2:3 * j, 6 * id1 - 5:6 * id1 - 3) = eye(3);
         J(3 * j - 2:3 * j, 6 * id1 - 2:6 * id1) = -cross_mat(array_rt(1:3, j));
         J(3 * j - 2:3 * j, 6 * id2 - 5:6 * id2 - 3) = -eye(3);
         J(3 * j - 2:3 * j, 6 * id2 - 2:6 * id2) = cross_mat(array_rt(4:6, j));
         delta(3 * j - 2:3 * j, 1) = -array_delta(:, j) / h;
+        total_delta = total_delta + norm(array_xt(:, id1) + array_rt(1:3, j) - array_xt(:, id2) - array_rt(4:6, j));
     end
+    total_delta
 
+%     解算方程
     A = [M, - J';
          J, zeros(3 * num_links, 3 * num_links)];
     B = [M * vt + F;delta];
 
-    vt_1 = inv(A) * B;
-    
+    vt_1 = Elimination_method_solution_of_linear_equations(A, B);
+%     更新运动数据
     for j = 1:num_bones
         array_vt(:, j) = vt_1(6 * j - 5:6 * j - 3);
         array_wt(:, j) = vt_1(6 * j - 2:6 * j);
         array_xt(:, j) = array_vt(:, j) * h + array_xt(:, j);
         array_Rt(:, 3 * j - 2:3 * j) = Rodrigues(180 / pi * norm(array_wt(:, j) * h), normalize(array_wt(:, j) * h)) * array_Rt(:, 3 * j - 2:3 * j);
     end
-
+%     更新约束数据
     for j = 1:num_links
         id1 = array_links(1, j);
         id2 = array_links(2, j);
         array_rt(1:3, j) = Rodrigues(180 / pi * norm(array_wt(:, id1) * h), normalize(array_wt(:, id1) * h)) * array_rt(1:3, j);
         array_rt(4:6, j) = Rodrigues(180 / pi * norm(array_wt(:, id2) * h), normalize(array_wt(:, id2) * h)) * array_rt(4:6, j);
     end
-
+%     更新输出数据
     for j = 1:num_bones
         x(3 * i - 2:3 * i, j) = array_xt(:, j);
         r(3 * i - 2:3 * i, 3 * j - 2:3 * j) = array_Rt(:, 3 * j - 2:3 * j);

@@ -1,0 +1,205 @@
+extern "C"
+{
+#include "raylib.h"
+#include "raymath.h"
+//#define RAYGUI_IMPLEMENTATION
+//#include "raygui.h"
+}
+
+#include "character.hpp"
+#include "controller.hpp"
+#include "curve.hpp"
+#include "database.hpp"
+#include "ik.hpp"
+#include "motion.hpp"
+#include "nnet.hpp"
+#include "renderer.hpp"
+#include "robot.hpp"
+
+enum
+{
+    GAMEPAD_PLAYER = 0,
+};
+
+enum
+{
+    GAMEPAD_STICK_LEFT,
+    GAMEPAD_STICK_RIGHT,
+};
+
+vec3 gamepad_get_stick(int stick, const float deadzone = 0.2f)
+{
+    float gamepadx = GetGamepadAxisMovement(GAMEPAD_PLAYER, stick == GAMEPAD_STICK_LEFT ? GAMEPAD_AXIS_LEFT_X : GAMEPAD_AXIS_RIGHT_X);
+    float gamepady = GetGamepadAxisMovement(GAMEPAD_PLAYER, stick == GAMEPAD_STICK_LEFT ? GAMEPAD_AXIS_LEFT_Y : GAMEPAD_AXIS_RIGHT_Y);
+    float gamepadmag = sqrtf(gamepadx*gamepadx + gamepady*gamepady);
+    
+    if (gamepadmag > deadzone)
+    {
+        float gamepaddirx = gamepadx / gamepadmag;
+        float gamepaddiry = gamepady / gamepadmag;
+        float gamepadclippedmag = gamepadmag > 1.0f ? 1.0f : gamepadmag*gamepadmag;
+        gamepadx = gamepaddirx * gamepadclippedmag;
+        gamepady = gamepaddiry * gamepadclippedmag;
+    }
+    else
+    {
+        gamepadx = 0.0f;
+        gamepady = 0.0f;
+    }
+    
+    return vec3(gamepadx, 0.0f, gamepady);
+}
+
+int main(int argc, char** argv)
+{
+    //相机
+    MooCamera camera(1, 0.1f, 0.1f, 0.05f, 50.f, vec3(8.f, 2.f, -0.f), mat3());
+    camera.set_view(vec3(-1.f, 0.f, 0.f));
+    camera.update_orientation(vec3(0.f, 1.f, 0.f));
+    //控制器
+    Controller controller;
+    bind_controller(controller, &camera.position, &camera.direction);
+    //角色，保存原始所有信息
+    Character character;
+    character_load(character, "../resources/character.bin");
+    //机器人
+    Robot robot;
+    robot_load(robot, "../resources/robot.bin");
+    // robot = create_robot(0.4f, 5.f, 18, 50, 10, 0.8f);
+    // robot_save(robot, "../resources/robot.bin");
+    //对角色数据的拷贝
+    MooMesh mesh1 = make_character_rest_mesh(character);
+    MooMesh mesh2 = make_robot_rest_mesh(robot);
+    MooMesh mesh3 = cube();
+    //材质
+    MooMaterial material1(PBR);
+    material1.roughness = 0.1f;
+    material1.tex = img_to_tex("../resources/texture.png");
+    material1.BRDFLut = img_to_tex("../resources/BRDFLut.png");
+    material1.EavgLut = img_to_tex("../resources/EavgLut.png");
+    MooMaterial material2(PBR);
+    material2.roughness = 0.75f;
+    material2.tex = img_to_tex("../resources/texture.png");
+    material2.BRDFLut = img_to_tex("../resources/BRDFLut.png");
+    material2.EavgLut = img_to_tex("../resources/EavgLut.png");
+    MooMaterial material3(TEXTURE);
+    material3.roughness = 0.5f;
+    material3.tex = img_to_tex("../resources/skybox.png");
+    material3.BRDFLut = img_to_tex("../resources/BRDFLut.png");
+    material3.EavgLut = img_to_tex("../resources/EavgLut.png");
+    //model存储mesh的拷贝，但由于mesh本身存储的是地址，实际上仍为mesh地址上的数据
+    MooModel model1 = mesh_material_to_model(mesh1, material1);
+    MooModel model2 = mesh_material_to_model(mesh2, material2);
+    MooModel model3 = mesh_material_to_model(mesh3, material3);
+    //动作库
+    BVH_Motion motion, motion1, motion2, motion3, motion4, motion5, motion6;
+    Motion_load(motion, "../resources/long_motion.bin");
+    motion1 = motion_sub_sequence(motion, 0, 50);
+    motion2 = motion_sub_sequence(motion, 300, 350);
+    motion3 = translation_and_rotation(motion1, 0, vec3(0.f, 0.5f, 0.f), vec3(0.f, 0.f, -1.f));
+    motion4 = translation_and_rotation(motion2, 0, vec3(0.f, 0.5f, 0.f), vec3(-1.f, 0.f, 0.f));
+    motion5 = motion_concatenate(motion3, motion4);
+    //点光源
+    Point_Light light(vec3(0.f, 1.f, 1.5f), vec3(0.f, 0.f, -1.f), vec3(8.f));
+    MooModel model0 = get_light_model(light);
+    //更新信息
+    updated_paramters par;
+    par.light_dir = &light.light_direction;
+    par.light_pos = &light.light_position;
+    par.light_radiance = &light.light_radiance;
+    par.shadow_map = light.shadow_map;
+    //渲染器
+    MooRenderer renderer;
+
+    renderer.models.push_back(&model0);
+    renderer.models.push_back(&model1);
+    renderer.models.push_back(&model2);
+    renderer.models.push_back(&model3);
+    renderer.point_lights.push_back(&light);
+
+    FBO output(540, 540);
+
+    int key = 0;
+
+    array1d<vec3> character_bone_anim_positions(motion.nbones());
+    array1d<quat> character_bone_anim_rotations(motion.nbones());
+
+    array1d<vec3> robot_bone_anim_positions0(robot.nbones());
+    array1d<quat> robot_bone_anim_rotations0(robot.nbones());
+    array1d<vec3> robot_bone_anim_positions1(robot.nbones());
+    array1d<quat> robot_bone_anim_rotations1(robot.nbones());
+
+    array1d<vec3> bone_local_positions = robot.bone_local_positions;
+    array1d<quat> bone_local_rotations = robot.bone_local_rotations;
+    vec3 target = vec3(0.f, 5.f - 1.5f, - 1.5f);
+    float eps = 0.0001f;
+    int max = 10;
+
+    int size = bone_local_positions.size;
+    int t = 0;
+    vec3 ori = bone_local_positions(0);
+
+    array1d<vec3> bone_anim_positions(size);
+    array1d<quat> bone_anim_rotations(size);
+    array1d<float> lengths(size);
+    
+    bone_anim_positions(0) = ori;
+    lengths(0) = 0.f;
+    for(int i = 1; i < size; i++)
+    {
+        bone_anim_positions(i) = bone_anim_positions(i - 1) + bone_local_positions(i);
+        lengths(i) = length(bone_local_positions(i));
+    }
+
+    while (length(bone_anim_positions(size - 1) - target) > eps && t < max)
+    {
+        output.set(vec3(100.f, 200.f, 100.f), 100.f);
+        for(int i = 0; i < size; i++)
+        {
+            draw_point(bone_anim_positions(i), camera, &output, vec3(255.f, 0.f, 0.f));
+        }
+        draw_point(target, camera, &output, vec3(0.f, 0.f, 0.f));
+        cv::imshow("output", fbo_to_img(&output));
+        key = cv::waitKey(100);
+        //Backward
+        bone_anim_positions(size - 1) = target;
+        draw_point(bone_anim_positions(size - 1), camera, &output, vec3(0.f, 255.f, 0.f));
+        cv::imshow("output", fbo_to_img(&output));
+        key = cv::waitKey(100);
+
+        for(int i = size - 2; i > -1; i--)
+        {
+            vec3 vec = normalize(bone_anim_positions(i) - bone_anim_positions(i + 1));
+            bone_anim_positions(i) = bone_anim_positions(i + 1) + lengths(i + 1) * vec;
+            draw_point(bone_anim_positions(i), camera, &output, vec3(0.f, 255.f, 0.f));
+            cv::imshow("output", fbo_to_img(&output));
+            key = cv::waitKey(100);
+        }
+        output.set(vec3(100.f, 200.f, 100.f), 100.f);
+        for(int i = 0; i < size; i++)
+        {
+            draw_point(bone_anim_positions(i), camera, &output, vec3(255.f, 0.f, 0.f));
+        }
+        draw_point(target, camera, &output, vec3(0.f, 0.f, 0.f));
+        cv::imshow("output", fbo_to_img(&output));
+        key = cv::waitKey(100);
+        //Forward
+        bone_anim_positions(0) = ori;
+        draw_point(bone_anim_positions(0), camera, &output, vec3(0.f, 0.f, 255.f));
+        cv::imshow("output", fbo_to_img(&output));
+        key = cv::waitKey(100);
+
+        for(int i = 1; i < size; i++)
+        {
+            vec3 vec = normalize(bone_anim_positions(i) - bone_anim_positions(i - 1));
+            bone_anim_positions(i) = bone_anim_positions(i - 1) + lengths(i) * vec;
+            draw_point(bone_anim_positions(i), camera, &output, vec3(0.f, 0.f, 255.f));
+            cv::imshow("output", fbo_to_img(&output));
+            key = cv::waitKey(100);
+        }
+        t++;
+    }
+    
+    return 0;
+}
+

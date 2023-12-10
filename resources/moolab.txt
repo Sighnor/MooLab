@@ -123,8 +123,8 @@ int main(int argc, char** argv)
     // search_motion = motion_sub_sequence(motion, 39622, 53500);
     // search_motion = build_loop_motion(active_motion, 0.1f, 0.1f);
     //模拟器
-    Simulator simulator;
-    simulator.bind_simulator(motion);
+    // Simulator simulator;
+    // simulator.bind_simulator(motion);
     //点光源
     Point_Light light(vec3(0.f, 1.f, 1.5f), vec3(0.f, 0.f, -1.f), vec3(20.f));
     MooModel model0 = get_light_model(light);
@@ -322,6 +322,11 @@ int main(int argc, char** argv)
 
         last_character_bone_anim_positions = curr_character_bone_anim_positions;
         last_character_bone_anim_rotations = curr_character_bone_anim_rotations;
+
+        for(int i = 0; i < active_motion.nbones(); i++)
+        {
+            active_motion.bone_local_rotations(frame_num, i) = quat(1.f, 0.f, 0.f, 0.f);
+        }
 
         batch_forward_kinematics_full(
             active_motion, 

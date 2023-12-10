@@ -30,7 +30,7 @@ struct Camera_Controller
             float dt, 
             vec3 input);
 
-    void pos_gamepad_control(vec3 input);
+    void pos_gamepad_control(vec3 input, float distance);
     void dir_gamepad_control(vec3 input, float k);
 };
 
@@ -85,10 +85,10 @@ void Camera_Controller::dir_pid_control(
     *dir = sph_to_dir(ang);
 }
 
-void Camera_Controller::pos_gamepad_control(vec3 input)
+void Camera_Controller::pos_gamepad_control(vec3 input = vec3(0.f), float distance = 3.f)
 {
     // 默认方向为(0, 0, 1)，故默认向量为(0, 0 , -1)；
-    *pos = input + quat(rad_to_deg(ang.x), vec3(0.f, 1.f, 0.f)) * vec3(0.f, 0.f, -3.f);
+    *pos = input + quat(rad_to_deg(ang.x), vec3(0.f, 1.f, 0.f)) * vec3(0.f, 0.f, -distance);
 }
 
 void Camera_Controller::dir_gamepad_control(vec3 input, float k)
@@ -157,6 +157,130 @@ void Character_Controller::update(vec3 vel, vec3 avel, quat rotation)
     avel2 = 0.6f * avel0 + 0.4f * avel5;
     avel3 = 0.4f * avel0 + 0.6f * avel5;
     avel4 = 0.2f * avel0 + 0.8f * avel5;
+}
+
+struct formation
+{
+    array1d<float> phases;
+    array1d<vec3> poses;
+    array1d<vec3> vels;
+    array1d<vec3> accs;
+    array1d<vec3> poses_ek_0;
+    array1d<vec3> poses_ek_1;
+    array1d<vec3> poses_ek_2;
+
+    void formation_circle(
+            float p_const, 
+            float i_const, 
+            float d_const, 
+            float k, 
+            float dt, 
+            vec3 c, 
+            float r, 
+            float cycle, 
+            quat R);
+    void formation_triangle(
+            float p_const, 
+            float i_const, 
+            float d_const, 
+            float k, 
+            float dt, 
+            vec3 c, 
+            float length, 
+            float cycle, 
+            quat R);
+};
+
+formation formation_init(int size, vec3 c, float r)
+{
+    formation f;
+
+    f.phases.resize(size);
+    f.poses.resize(size);
+    for(int i = 0; i < size; i++)
+    {
+        f.phases(i) = i / float(size);
+        vec3 input = c + vec3(r * sin(f.phases(i) * 2 * PI), 0.f, r * cos(f.phases(i) * 2 * PI));
+        f.poses(i) = input;
+    }
+    f.vels.resize(size);
+    f.vels.zero();
+    f.accs.resize(size);
+    f.accs.zero();
+    f.poses_ek_0.resize(size);
+    f.poses_ek_0.zero();
+    f.poses_ek_1.resize(size);
+    f.poses_ek_1.zero();
+    f.poses_ek_2.resize(size);
+    f.poses_ek_2.zero();
+
+    return f;
+}
+
+void formation::formation_circle(
+                    float p_const, 
+                    float i_const, 
+                    float d_const, 
+                    float k, 
+                    float dt, 
+                    vec3 c, 
+                    float r, 
+                    float cycle, 
+                    quat R)
+{
+    for(int i = 0; i < poses.size; i++)
+    {
+        phases(i) = circulate_float(phases(i) + dt / cycle, 0, 1);
+        vec3 input = c + R * vec3(r * sin(phases(i) * 2 * PI), 0.f, r * cos(phases(i) * 2 * PI));
+        poses_ek_2(i) = poses_ek_1(i);
+        poses_ek_1(i) = poses_ek_0(i);
+        poses_ek_0(i) = input - poses(i);
+
+        accs(i) = k * ((p_const * (poses_ek_0(i) - poses_ek_1(i)) + i_const * poses_ek_0(i) - d_const * (poses_ek_0(i) - 2 * poses_ek_1(i) + poses_ek_2(i))));
+        vels(i) = vels(i) + accs(i) * dt;
+        poses(i) = poses(i) + vels(i) * dt;
+    }
+}
+
+void formation::formation_triangle(
+                    float p_const, 
+                    float i_const, 
+                    float d_const, 
+                    float k, 
+                    float dt, 
+                    vec3 c, 
+                    float length, 
+                    float cycle, 
+                    quat R)
+{
+    for(int i = 0; i < poses.size; i++)
+    {
+        phases(i) = circulate_float(phases(i) + dt / cycle, 0, 1);
+        vec3 input;
+        if(phases(i) <= 2 / 9.f)
+        {
+            input = c + R * (length / sqrt(3) * (vec3(0, 0, 1) + phases(i) / (2 / 9.f) * vec3(sqrt(3), 0, - 1)));
+        }
+        else if(phases(i) > 2 / 9.f && phases(i) <= 5 / 9.f)
+        {
+            input = c + R * (length / sqrt(3) * (vec3(sqrt(3), 0, 0) + (phases(i) - 2 / 9.f) / (1 / 3.f) * vec3(- 3 * sqrt(3) / 2.f, 0, - 3 / 2.f)));
+        } 
+        else if(phases(i) > 5 / 9.f && phases(i) <= 8 / 9.f)
+        {
+            input = c + R * (length / sqrt(3) * (vec3(- sqrt(3) / 2.f, 0, -3 / 2.f) + (phases(i) - 5 / 9.f) / (1 / 3.f) * vec3(0, 0, 3)));
+        }
+        else
+        {
+            input = c + R * (length / sqrt(3) * (vec3(- sqrt(3) / 2.f, 0, 3 / 2.f) + (phases(i) - 8 / 9.f) / (1 / 9.f) * vec3(sqrt(3) / 2.f, 0, - 1 / 2.f)));
+        }
+        poses_ek_2(i) = poses_ek_1(i);
+        poses_ek_1(i) = poses_ek_0(i);
+        poses_ek_0(i) = input - poses(i);
+
+        accs(i) = k * ((p_const * (poses_ek_0(i) - poses_ek_1(i)) + i_const * poses_ek_0(i) - d_const * (poses_ek_0(i) - 2 * poses_ek_1(i) + poses_ek_2(i))));
+        vels(i) = vels(i) + accs(i) * dt;
+        poses(i) = poses(i) + vels(i) * dt;
+    }
 }
 
 #endif

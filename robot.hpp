@@ -329,16 +329,17 @@ Robot create_robot(float r, float h, int r_size, int h_size, int bones_size, flo
             for(int i = 0; i < 4; i++)
             {
                 int bone_id = weights[i].first;
-                if(robot.bone_parents(bone_id) == -1)
+                int parent_id = robot.bone_parents(bone_id);
+                if(parent_id == -1)
                 {
                     weights[i].first = 0;
                     weights[i].second = 0.f;
                 }
                 else
                 {
-                    vec3 v1 = robot.all_rest_positions(id) - robot.bone_rest_positions(robot.bone_parents(bone_id));
+                    vec3 v1 = robot.all_rest_positions(id) - robot.bone_rest_positions(parent_id);
                     vec3 v2 = robot.bone_local_positions(bone_id);
-                    weights[i].first = robot.bone_parents(bone_id);
+                    weights[i].first = parent_id;
                     weights[i].second = weights_function(dot(v1, v2) / length(v2) / length(v2));
                 }
             }

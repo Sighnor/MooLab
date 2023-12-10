@@ -103,7 +103,7 @@ static inline quat inv_quat(quat q)
 static inline quat rot_vec_to_quat(vec3 rot)
 {
     float phi = length(rot);
-    if(phi < 0.00000001f)
+    if(phi < 1e-8f)
     {
         return quat(1.f, 0.f, 0.f, 0.f);
     }
@@ -197,7 +197,7 @@ static inline vec3 quat_to_avel(quat last, quat curr, float dt = 0.0166667f)
 
 static inline quat avel_to_quat(vec3 avel, float t)
 {
-    if(length(avel) < 1e-4f)
+    if(length(avel) < 1e-8f)
     {
         return quat(1.f, 0.f, 0.f, 0.f);
     }
@@ -205,10 +205,19 @@ static inline quat avel_to_quat(vec3 avel, float t)
     return quat(theta, avel);
 }
 
+static inline quat vec_to_quat(vec3 v1, vec3 v2)
+{
+    v1 = normalize(v1);
+    v2 = normalize(v2);
+    vec3 axis = normalize(cross(v1, v2));
+    float phi = rad_to_deg(acos(dot(v1, v2)));
+    return quat(phi, axis);
+}
+
 static inline mat3 quat_to_Rodrigues(quat q)
 {
     float theta = rad_to_deg(2 * acos(clampf(q.w, -1.f, 1.f)));
-    vec3 omega = normalize(vec3(q.x, q.y, q.z));
+    vec3 omega = vec3(q.x, q.y, q.z);
     return Rodrigues(theta, omega);
 }
 
