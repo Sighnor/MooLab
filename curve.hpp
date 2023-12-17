@@ -116,13 +116,13 @@ template<typename T>
 array1d<T> spine_curve(const slice1d<T> points, float mSampleTime = 0.05f)
 {
     array1d<T> curve_points((points.size - 1) / mSampleTime + 1);
-    array1d<T> vec(points.size);
+    array1d<T> vels(points.size);
 
-    vec(0) = points(1) - points(0);
-    vec(points.size - 1) = points(points.size - 1) - points(points.size - 2);
+    vels(0) = points(1) - points(0);
+    vels(points.size - 1) = points(points.size - 1) - points(points.size - 2);
     for(int i = 1; i < points.size - 1; i++)
     {
-        vec(i) = (points(i + 1) - points(i - 1)) / 2.f;
+        vels(i) = (points(i + 1) - points(i - 1)) / 2.f;
     }
 
     int id = 0;
@@ -139,8 +139,8 @@ array1d<T> spine_curve(const slice1d<T> points, float mSampleTime = 0.05f)
             point, 
             points(i0), 
             points(i1), 
-            vec(i0), 
-            vec(i0), 
+            vels(i0), 
+            vels(i1), 
             i - i0);
 
         curve_points(id) = point;
