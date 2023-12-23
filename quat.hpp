@@ -210,7 +210,7 @@ static inline quat vec_to_quat(vec3 v1, vec3 v2)
     v1 = normalize(v1);
     v2 = normalize(v2);
     vec3 axis = normalize(cross(v1, v2));
-    float phi = rad_to_deg(acos(dot(v1, v2)));
+    float phi = rad_to_deg(acos(clampf(dot(v1, v2), -1.f, 1.f)));
     return quat(phi, axis);
 }
 
