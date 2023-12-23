@@ -1,6 +1,7 @@
 #ifndef MOOLAB_CONTROLLER
 #define MOOLAB_CONTROLLER
 
+#include "quat.hpp"
 #include "vec.hpp"
 
 struct Camera_Controller
