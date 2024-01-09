@@ -337,9 +337,14 @@ struct Simulator
     array1d<vec3> bone_forces;
     array1d<vec3> bone_torgues;
 
+    array1d<vec3> i_ek_rots;
+    array1d<vec3> last_ek_rots;
+
     void simulate_gravity(double g);
     void simulate_damp(double damp);
-    void simulate_contact(double ground_height, double eps);
+    void simulate_contact(double A, double B, double C, double D, double eps);
+    void simulate_local_control(slice1d<quat> target_local_rotations);
+    void simulate_global_control(slice1d<quat> target_anim_rotations);
     void simulate(double dt);
     void batch_forward_kinematics_full();
 };
@@ -361,7 +366,7 @@ void Simulator::simulate_damp(double damp)
     }
 }
 
-void Simulator::simulate_contact(double ground_height = 0, double eps = 1e-2)
+void Simulator::simulate_contact(double A = 0, double B = 1, double C = 0, double D = 0, double eps = 1e-2)
 {
     //碰撞检测
     for(int i = 0; i < bone_masses.size; i++)
@@ -386,19 +391,21 @@ void Simulator::simulate_contact(double ground_height = 0, double eps = 1e-2)
                 vec3 vp = (bone_vels(i) + cross(bone_avels(i), p - bone_shapes(i).pos));
                 vec3 vq = (bone_vels(j) + cross(bone_avels(j), q - bone_shapes(j).pos));
 
-                double length_Fp = kp * (bone_shapes(i).radius + bone_shapes(j).radius - eps - distance) + kd * dot(vp, q - p) / std::max(length(q - p), 1e-8f);
-                double length_Fq = kp * (bone_shapes(i).radius + bone_shapes(j).radius - eps - distance) + kd * dot(vq, p - q) / std::max(length(p - q), 1e-8f);
+                vec3 dir_Fp = normalize(p - q);
+                vec3 dir_Fq = normalize(q - p);
+                double length_Fp = kp * (bone_shapes(i).radius + bone_shapes(j).radius - eps - distance) + kd * dot(vp, -dir_Fp);
+                double length_Fq = kp * (bone_shapes(i).radius + bone_shapes(j).radius - eps - distance) + kd * dot(vq, -dir_Fq);
 
-                bone_forces(i) = bone_forces(i) + length_Fp * normalize(p - q);
-                bone_torgues(i) = bone_torgues(i) + length_Fp * cross(p - bone_shapes(i).pos, normalize(p - q));
-                bone_forces(j) = bone_forces(j) + length_Fq * normalize(q - p);
-                bone_torgues(j) = bone_torgues(j) + length_Fq * cross(q - bone_shapes(j).pos, normalize(q - p));
+                bone_forces(i) = bone_forces(i) + length_Fp * dir_Fp;
+                bone_torgues(i) = bone_torgues(i) + length_Fp * cross(p - bone_shapes(i).pos, dir_Fp);
+                bone_forces(j) = bone_forces(j) + length_Fq * dir_Fq;
+                bone_torgues(j) = bone_torgues(j) + length_Fq * cross(q - bone_shapes(j).pos, dir_Fq);
             }
                 
         }
         //地面碰撞检测
         double lambda;
-        double distance = distance_between_line_segment_plane(p1, p2, 0, 1, 0, -ground_height, lambda);
+        double distance = distance_between_line_segment_plane(p1, p2, A, B, C, D, lambda);
         if(distance < bone_shapes(i).radius - eps)
         {
             double kp = 10000;
@@ -407,12 +414,94 @@ void Simulator::simulate_contact(double ground_height = 0, double eps = 1e-2)
             vec3 p = p1 + lambda * (p2 - p1);
             vec3 v = (bone_vels(i) + cross(bone_avels(i), p - bone_shapes(i).pos));
 
-            double length_F = kp * (bone_shapes(i).radius - eps - distance) + kd * dot(v, vec3(0, -1, 0));
+            vec3 dir_F = normalize(vec3(A, B, C));
+            double length_F = kp * (bone_shapes(i).radius - eps - distance) + kd * dot(v, -dir_F);
 
-            bone_forces(i) = bone_forces(i) + length_F * vec3(0, 1, 0);
-            bone_torgues(i) = bone_torgues(i) + length_F * cross(p - bone_shapes(i).pos, vec3(0, 1, 0));
+            bone_forces(i) = bone_forces(i) + length_F * dir_F;
+            bone_torgues(i) = bone_torgues(i) + length_F * cross(p - bone_shapes(i).pos, dir_F);
         }  
     }
+}
+
+void Simulator::simulate_local_control(slice1d<quat> target_local_rotations)
+{
+    for(int i = 1; i < bone_ids.size; i++)
+    {
+        if(i == 1)
+        {
+            quat target_anim_rotation = target_local_rotations(0) * target_local_rotations(1) * bone_quat_compensates(0);
+            vec3 ek_rot = quat_to_avel(bone_shapes(0).rot, target_anim_rotation, 1.f / 60);
+            if(length(ek_rot) > 10)
+            {
+                i_ek_rots(0) = vec3(0.f);
+            }
+            else
+            {
+                i_ek_rots(0) = i_ek_rots(0) + ek_rot;
+            }
+            vec3 torgue = 1.5f * ek_rot + 0.01f * i_ek_rots(0) + 0.2f * (ek_rot - last_ek_rots(0));
+            bone_torgues(0) = bone_torgues(0) + torgue;
+            last_ek_rots(0) = ek_rot;
+
+            double mass = 0;
+            vec3 center = vec3(0.f);
+            for(int j = 0; j < bone_masses.size; j++)
+            {
+                mass = mass + bone_masses(j);
+                center = center + bone_masses(j) * bone_shapes(j).pos;
+            }
+            // center = center / mass - bone_shapes(0).pos;
+            center = 0.5f * (bone_shapes(4).pos + bone_shapes(8).pos) - bone_shapes(0).pos;
+            
+            bone_forces(0) = 1000.f * vec3(center.x, 0.f, center.z);
+        }
+        else
+        {
+            int parent_id = bone_parents(i);
+            quat target_anim_rotation = bone_shapes(parent_id - 1).rot * inv_quat(bone_quat_compensates(parent_id - 1)) * target_local_rotations(i) * bone_quat_compensates(i - 1);
+            vec3 ek_rot = quat_to_avel(bone_shapes(i - 1).rot, target_anim_rotation, 1.f / 60);
+            if(length(ek_rot) > 10)
+            {
+                i_ek_rots(i - 1) = vec3(0.f);
+            }
+            else
+            {
+                i_ek_rots(i - 1) = i_ek_rots(i - 1) + ek_rot;
+            }
+            vec3 torgue = 1.5f * ek_rot + 0.01f * i_ek_rots(i - 1) + 0.2f * (ek_rot - last_ek_rots(i - 1));
+            bone_torgues(i - 1) = bone_torgues(i - 1) + torgue;
+            bone_torgues(parent_id - 1) = bone_torgues(parent_id - 1) - torgue;
+            last_ek_rots(i - 1) = ek_rot;
+            if(i == 5)
+            {
+                std::cout << length(ek_rot) << std::endl;
+            }
+        }
+    }
+}
+
+void Simulator::simulate_global_control(slice1d<quat> target_anim_rotations)
+{
+    for(int i = 1; i < bone_ids.size; i++)
+    {
+        vec3 ek_rot = quat_to_avel(bone_shapes(i - 1).rot, target_anim_rotations(i), 1.f / 60);
+        if(length(ek_rot) > 10)
+        {
+            i_ek_rots(i - 1) = vec3(0.f);
+        }
+        else
+        {
+            i_ek_rots(i - 1) = i_ek_rots(i - 1) + ek_rot;
+        }
+        vec3 torgue = 1.5f * ek_rot + 0.01f * i_ek_rots(i - 1) + 0.2f * (ek_rot - last_ek_rots(i - 1));
+        bone_torgues(i - 1) = bone_torgues(i - 1) + torgue;
+        last_ek_rots(i - 1) = ek_rot;
+        if(i == 1)
+        {
+            std::cout << length(ek_rot) << std::endl;
+        }
+    }
+    
 }
 
 void Simulator::simulate(double h = 0.0166667)
@@ -551,6 +640,11 @@ void bind_simulator(Simulator &simulator, const BVH_Motion &motion, int frame_id
     simulator.bone_torgues.resize(motion.nbones() - 1);
     simulator.bone_torgues.zero();
 
+    simulator.i_ek_rots.resize(motion.nbones() - 1);
+    simulator.i_ek_rots.zero();
+    simulator.last_ek_rots.resize(motion.nbones() - 1);
+    simulator.last_ek_rots.zero();
+
     for(int i = 0; i < simulator.bone_masses.size; i++)
     {
         simulator.bone_masses(i) = 1;
@@ -661,22 +755,30 @@ void bind_simulator(Simulator &simulator, const BVH_Motion &motion, int frame_id
     // }
 }
 
-void deform_character_anim_bones(const Simulator &simulator, slice1d<vec3> _bone_anim_positions, slice1d<quat> _bone_anim_rotations)
+void revise_anim_bones(const Simulator &simulator, slice1d<quat> bone_anim_rotations)
 {
-    _bone_anim_positions.zero();
-    _bone_anim_rotations.zero();
+    for(int i = 1; i < simulator.bone_ids.size; i++)
+    {
+        bone_anim_rotations(i) = bone_anim_rotations(i) * simulator.bone_quat_compensates(i - 1);
+    }
+}
+
+void deform_character_anim_bones(const Simulator &simulator, slice1d<vec3> bone_anim_positions, slice1d<quat> bone_anim_rotations)
+{
+    bone_anim_positions.zero();
+    bone_anim_rotations.zero();
     
     for(int i = 1; i < simulator.bone_ids.size; i++)
     {
-        _bone_anim_rotations(i) = simulator.bone_shapes(i - 1).rot * inv_quat(simulator.bone_quat_compensates(i - 1));
+        bone_anim_rotations(i) = simulator.bone_shapes(i - 1).rot * inv_quat(simulator.bone_quat_compensates(i - 1));
     }
 
-    _bone_anim_positions(1) = simulator.bone_shapes(0).pos;
+    bone_anim_positions(1) = simulator.bone_shapes(0).pos;
     for(int i = 0; i < simulator.bone_links.size; i++)
     {
         int id1 = simulator.bone_links(i).a;
         int id2 = simulator.bone_links(i).b;
-        _bone_anim_positions(id2 + 1) = (simulator.bone_shapes(id1).pos + simulator.bone_links(i).ra + simulator.bone_shapes(id2).pos + simulator.bone_links(i).rb) / 2.f;
+        bone_anim_positions(id2 + 1) = (simulator.bone_shapes(id1).pos + simulator.bone_links(i).ra + simulator.bone_shapes(id2).pos + simulator.bone_links(i).rb) / 2.f;
     }
 }
 
