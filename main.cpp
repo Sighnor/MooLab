@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     Motion_load(motion, "../resources/long_motion.bin");
     //模拟器
     Simulator simulator;
-    bind_simulator(simulator, motion, 2400, 0.05);
+    bind_simulator(simulator, motion, 300, 0.05);
     //点光源
     Point_Light light(vec3(0.f, 1.f, 1.5f), vec3(0.f, 0.f, -1.f), vec3(20.f));
     //对角色数据的拷贝
@@ -112,19 +112,17 @@ int main(int argc, char** argv)
     int key = 0;
     int frame_num = 0;
     int t = 0;
+    int simulate_time = 1;
 
     float dt = 0.0166667f;
 
     int times = 3000;
 
+    array1d<vec3> target_character_bone_anim_positions(motion.nbones());
+    array1d<quat> target_character_bone_anim_rotations(motion.nbones());
+
     array1d<vec3> curr_character_bone_anim_positions(motion.nbones());
     array1d<quat> curr_character_bone_anim_rotations(motion.nbones());
-
-    array1d<vec3> last_character_bone_anim_positions(motion.nbones());
-    array1d<quat> last_character_bone_anim_rotations(motion.nbones());
-
-    array1d<vec3> next_character_bone_anim_positions(motion.nbones());
-    array1d<quat> next_character_bone_anim_rotations(motion.nbones());
 
     array2d<vec3> x(times, 22);
     array2d<mat3> R(times, 22);
@@ -185,13 +183,28 @@ int main(int argc, char** argv)
 
         camera.fbo[0].set(vec3(100.f, 100.f, 200.f), 100.f);
 
-        last_character_bone_anim_positions = curr_character_bone_anim_positions;
-        last_character_bone_anim_rotations = curr_character_bone_anim_rotations;
+        batch_forward_kinematics_full(
+            motion, 
+            300, 
+            target_character_bone_anim_positions, 
+            target_character_bone_anim_rotations);
 
-        simulator.simulate_gravity(9.8);
-        simulator.simulate_damp(0.5);
-        simulator.simulate_contact(-0.5, 1e-2);
-        simulator.simulate(double(1) / 60);
+        // deform_character_anim_mesh(
+        // character, 
+        // target_character_bone_anim_positions, 
+        // target_character_bone_anim_rotations, 
+        // mesh1);
+
+        revise_anim_bones(simulator, target_character_bone_anim_rotations);
+
+        for(int i = 0; i < simulate_time; i++)
+        {
+            simulator.simulate_gravity(9.8);
+            simulator.simulate_damp(0.5);
+            simulator.simulate_contact(0, 1, 0, 0.25, 1e-2);
+            simulator.simulate_local_control(motion.bone_local_rotations(300));
+            simulator.simulate(dt / simulate_time);
+        }
 
         deform_character_anim_bones(
             simulator, 
@@ -204,20 +217,23 @@ int main(int argc, char** argv)
             curr_character_bone_anim_rotations, 
             mesh1);
 
-        camera_controller.dir_gamepad_control(vec3(0.1f, 0.f, 0.f), 0.1f);
+        camera_controller.dir_gamepad_control(vec3(0.f, 0.f, 0.f), 0.1f);
         camera.update_orientation(vec3(0.f, 1.f, 0.f));
         // camera_controller.pos_gamepad_control(vec3(x(t, 0).x, 0.f, x(t, 0).z), 3);
-        camera_controller.pos_gamepad_control(vec3(simulator.bone_shapes(0).pos.x, 0.f, simulator.bone_shapes(0).pos.z), 3);
+        camera_controller.pos_gamepad_control(vec3(simulator.bone_shapes(0).pos.x, 0.f, simulator.bone_shapes(0).pos.z), camera.orientation, 3);
 
+        light.light_position = vec3(simulator.bone_shapes(0).pos.x, 3.f, simulator.bone_shapes(0).pos.z) -  
+                               3.f * camera.direction;
+        light.light_radiance = 20.f + 10.f * sin(deg_to_rad(0.5f * t));
         renderer.models[0]->transform = mat4(eye3(), renderer.point_lights[0]->light_position) * mat4(0.01f);
 
         // float delta = 0;
-        // for(int i = 2; i < 24; i++)
-        // {
-        //     // renderer.models[i]->transform = mat4(eye3(), x(t, i - 2)) * mat4(R(t, i - 2), vec3());
-        //     // renderer.models[i]->transform = mat4(eye3(), simulator.bone_shapes(i - 2).pos) * mat4(quat_to_Rodrigues(simulator.bone_shapes(i - 2).rot), vec3());
-        //     delta = delta + length(x(t, i - 2) - simulator.bone_shapes(i - 2).pos);
-        // }
+        for(int i = 2; i < 24; i++)
+        {
+            // renderer.models[i]->transform = mat4(eye3(), x(t, i - 2)) * mat4(R(t, i - 2), vec3());
+            renderer.models[i]->transform = mat4(eye3(), simulator.bone_shapes(i - 2).pos) * mat4(quat_to_Rodrigues(simulator.bone_shapes(i - 2).rot), vec3());
+            // delta = delta + length(x(t, i - 2) - simulator.bone_shapes(i - 2).pos);
+        }
         // std::cout << t << ',' << delta << std::endl;
         
         draw(renderer.models[0], camera, &camera.fbo[0], &par, false);
