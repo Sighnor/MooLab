@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     Motion_load(motion, "../resources/long_motion.bin");
     //模拟器
     Simulator simulator;
-    bind_simulator(simulator, motion, 300, 0.05);
+    bind_simulator(simulator, motion, 12600, 0.05);
     //点光源
     Point_Light light(vec3(0.f, 1.f, 1.5f), vec3(0.f, 0.f, -1.f), vec3(20.f));
     //对角色数据的拷贝
@@ -111,12 +111,12 @@ int main(int argc, char** argv)
 
     int key = 0;
     int frame_num = 0;
-    int t = 0;
-    int simulate_time = 1;
+    float t = 0;
+    int simulate_time = 2;
 
     float dt = 0.0166667f;
 
-    int times = 3000;
+    int times = 900;
 
     array1d<vec3> target_character_bone_anim_positions(motion.nbones());
     array1d<quat> target_character_bone_anim_rotations(motion.nbones());
@@ -124,56 +124,56 @@ int main(int argc, char** argv)
     array1d<vec3> curr_character_bone_anim_positions(motion.nbones());
     array1d<quat> curr_character_bone_anim_rotations(motion.nbones());
 
-    array2d<vec3> x(times, 22);
-    array2d<mat3> R(times, 22);
+    // array2d<vec3> x(times, 22);
+    // array2d<mat3> R(times, 22);
 
-    std::ifstream infile;
+    // std::ifstream infile;
 
-    infile.open("../resources/x.txt");
-    for(int i = 0; i < times; i++)
-    {
-        for(int j = 0; j < 22; j++)
-        {
-            infile >> x(i, j).x;
-        }
-        for(int j = 0; j < 22; j++)
-        {
-            infile >> x(i, j).y;
-        }
-        for(int j = 0; j < 22; j++)
-        {
-            infile >> x(i, j).z;
-        }
-    }
-    infile.close();
+    // infile.open("../resources/x.txt");
+    // for(int i = 0; i < times; i++)
+    // {
+    //     for(int j = 0; j < 22; j++)
+    //     {
+    //         infile >> x(i, j).x;
+    //     }
+    //     for(int j = 0; j < 22; j++)
+    //     {
+    //         infile >> x(i, j).y;
+    //     }
+    //     for(int j = 0; j < 22; j++)
+    //     {
+    //         infile >> x(i, j).z;
+    //     }
+    // }
+    // infile.close();
 
-    infile.open("../resources/R.txt");
-    for(int i = 0; i < times; i++)
-    {
-        for(int j = 0; j < 22; j++)
-        {
-            infile >> R(i, j).X.x;
-            infile >> R(i, j).Y.x;
-            infile >> R(i, j).Z.x;
-        }
-        for(int j = 0; j < 22; j++)
-        {
-            infile >> R(i, j).X.y;
-            infile >> R(i, j).Y.y;
-            infile >> R(i, j).Z.y;
-        }
-        for(int j = 0; j < 22; j++)
-        {
-            infile >> R(i, j).X.z;
-            infile >> R(i, j).Y.z;
-            infile >> R(i, j).Z.z;
-        }
-    }
-    infile.close();
+    // infile.open("../resources/R.txt");
+    // for(int i = 0; i < times; i++)
+    // {
+    //     for(int j = 0; j < 22; j++)
+    //     {
+    //         infile >> R(i, j).X.x;
+    //         infile >> R(i, j).Y.x;
+    //         infile >> R(i, j).Z.x;
+    //     }
+    //     for(int j = 0; j < 22; j++)
+    //     {
+    //         infile >> R(i, j).X.y;
+    //         infile >> R(i, j).Y.y;
+    //         infile >> R(i, j).Z.y;
+    //     }
+    //     for(int j = 0; j < 22; j++)
+    //     {
+    //         infile >> R(i, j).X.z;
+    //         infile >> R(i, j).Y.z;
+    //         infile >> R(i, j).Z.z;
+    //     }
+    // }
+    // infile.close();
 
     cv::imshow("MOOLAB", fbo_to_img(&camera.fbo[0]));
 
-    while (key != 27 && t < times)
+    while (key != 27 && t < times * dt)
     {
         vec3 gamepadstick_left = gamepad_get_stick(GAMEPAD_STICK_LEFT);
         vec3 gamepadstick_right = gamepad_get_stick(GAMEPAD_STICK_RIGHT);
@@ -183,11 +183,11 @@ int main(int argc, char** argv)
 
         camera.fbo[0].set(vec3(100.f, 100.f, 200.f), 100.f);
 
-        batch_forward_kinematics_full(
-            motion, 
-            300, 
-            target_character_bone_anim_positions, 
-            target_character_bone_anim_rotations);
+        // batch_forward_kinematics_full(
+        //     motion, 
+        //     0.2f * frame_num + 12600, 
+        //     target_character_bone_anim_positions, 
+        //     target_character_bone_anim_rotations);
 
         // deform_character_anim_mesh(
         // character, 
@@ -195,14 +195,23 @@ int main(int argc, char** argv)
         // target_character_bone_anim_rotations, 
         // mesh1);
 
-        revise_anim_bones(simulator, target_character_bone_anim_rotations);
+        // revise_anim_bones(simulator, target_character_bone_anim_rotations);
 
+        // if(t >= 5 && t <= 10)
+        // {
+        //     simulator.bone_forces(0) = simulator.bone_forces(0) + vec3(-30.f, -30.f, 0.f);
+        // }
+        // else if(t >= 15 && t <= 20)
+        // {
+        //     simulator.bone_forces(0) = simulator.bone_forces(0) + vec3(30.f, 30.f, 0.f);
+        // }
         for(int i = 0; i < simulate_time; i++)
         {
             simulator.simulate_gravity(9.8);
             simulator.simulate_damp(0.5);
             simulator.simulate_contact(0, 1, 0, 0.25, 1e-2);
-            simulator.simulate_local_control(motion.bone_local_rotations(300));
+            // simulator.simulate_global_control(target_character_bone_anim_rotations);
+            simulator.simulate_local_control(motion.bone_local_rotations(0.5f * frame_num + 12600));
             simulator.simulate(dt / simulate_time);
         }
 
@@ -220,7 +229,10 @@ int main(int argc, char** argv)
         camera_controller.dir_gamepad_control(vec3(0.f, 0.f, 0.f), 0.1f);
         camera.update_orientation(vec3(0.f, 1.f, 0.f));
         // camera_controller.pos_gamepad_control(vec3(x(t, 0).x, 0.f, x(t, 0).z), 3);
-        camera_controller.pos_gamepad_control(vec3(simulator.bone_shapes(0).pos.x, 0.f, simulator.bone_shapes(0).pos.z), camera.orientation, 3);
+        if(frame_num >= 0)
+        {
+            camera_controller.pos_gamepad_control(vec3(simulator.bone_shapes(0).pos.x, 0.f, simulator.bone_shapes(0).pos.z), camera.orientation, 3);
+        }
 
         light.light_position = vec3(simulator.bone_shapes(0).pos.x, 3.f, simulator.bone_shapes(0).pos.z) -  
                                3.f * camera.direction;
@@ -237,24 +249,24 @@ int main(int argc, char** argv)
         // std::cout << t << ',' << delta << std::endl;
         
         draw(renderer.models[0], camera, &camera.fbo[0], &par, false);
-        draw(renderer.models[1], camera, &camera.fbo[0], &par, false);
-        // for(int i = 2; i < 24; i++)
-        // {
-        //     draw(renderer.models[i], camera, &camera.fbo[0], &par, false);
-        // }
+        // draw(renderer.models[1], camera, &camera.fbo[0], &par, false);
+        for(int i = 2; i < 24; i++)
+        {
+            draw(renderer.models[i], camera, &camera.fbo[0], &par, false);
+        }
         draw(renderer.models[0], camera, &camera.fbo[0], &par, true);
-        draw(renderer.models[1], camera, &camera.fbo[0], &par, true);
-        // for(int i = 2; i < 24; i++)
-        // {
-        //     draw(renderer.models[i], camera, &camera.fbo[0], &par, true);
-        // }
+        // draw(renderer.models[1], camera, &camera.fbo[0], &par, true);
+        for(int i = 2; i < 24; i++)
+        {
+            draw(renderer.models[i], camera, &camera.fbo[0], &par, true);
+        }
 
         cv::imshow("MOOLAB", fbo_to_img(&camera.fbo[0]));
 
         std::cout << " Time: " << t << " Frame: " << frame_num 
                   << std::endl;
         frame_num++;
-        t++;
+        t = t + dt;
         key = cv::waitKey(1);
         EndDrawing();
     }
