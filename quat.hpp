@@ -183,6 +183,10 @@ static inline vec3 quat_to_avel(quat last, quat curr, float dt = 0.0166667f)
 {
     quat diff = curr * inv_quat(last);
     float scale;
+    if(diff.w < 0.f)
+    {
+        diff = -diff;
+    }
     if(diff.w > 0.99f)
     {
         scale = 2.f / dt;
