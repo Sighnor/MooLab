@@ -8,6 +8,7 @@ struct mat3
 {
     mat3() : X(), Y(), Z() {}
     mat3(vec3 _X, vec3 _Y, vec3 _Z) : X(_X), Y(_Y), Z(_Z) {}
+    mat3(float x, float y, float z): X(vec3(x, 0.f, 0.f)), Y(vec3(0.f, y, 0.f)), Z(vec3(0.f, 0.f, z)) {}
 
     vec3 X, Y, Z;
 };
