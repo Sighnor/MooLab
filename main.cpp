@@ -88,7 +88,7 @@ int main(int argc, char** argv)
     search_motion = motion_sub_sequence(motion, 0, 0 + 1.5 * N);
     //模拟器
     Simulator simulator;
-    bind_simulator(simulator, motion, 0, 0.05);
+    bind_simulator(simulator, motion, 12600, 0.05);
     //点光源
     Point_Light light(vec3(0.f, 1.f, 1.5f), vec3(0.f, 0.f, -1.f), vec3(20.f));
     //对角色数据的拷贝
@@ -299,10 +299,14 @@ int main(int argc, char** argv)
         {
             for(int i = 0; i < simulate_time; i++)
             {
-                simulator.bone_forces(0) = simulator.bone_forces(0) + vec3(100.f, 0.f, 0.f);
+                // simulator.bone_forces(0) = simulator.bone_forces(0) + vec3(100.f, 0.f, 0.f);
                 simulator.simulate_gravity(9.8);
                 simulator.simulate_damp(0.25);
                 simulator.simulate_contact(0, 1, 0, 0.05, 1e-2);
+                if(t < 900)
+                {
+                    simulator.simulate_global_control(active_motion.bone_local_rotations(0.5f * frame_num));
+                }
                 // simulator.simulate_global_control(active_motion.bone_local_rotations(0.5f * frame_num));
                 // simulator.simulate_local_control(active_motion.bone_local_rotations(0.5f * frame_num));
                 simulator.simulate(dt / simulate_time);
@@ -426,11 +430,11 @@ int main(int argc, char** argv)
         //     draw(renderer.models[i], camera, &camera.fbo[0], &par, false);
         // }
         draw(renderer.models[0], camera, &camera.fbo[0], &par, true);
-        draw(renderer.models[1], camera, &camera.fbo[0], &par, true);
-        // for(int i = 2; i < 24; i++)
-        // {
-        //     draw(renderer.models[i], camera, &camera.fbo[0], &par, true);
-        // }
+        // draw(renderer.models[1], camera, &camera.fbo[0], &par, true);
+        for(int i = 2; i < 24; i++)
+        {
+            draw(renderer.models[i], camera, &camera.fbo[0], &par, true);
+        }
 
         if(contact == 0)
         {
