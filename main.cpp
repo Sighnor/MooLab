@@ -51,6 +51,7 @@ vec3 gamepad_get_stick(int stick, const float deadzone = 0.2f)
 
 int main(int argc, char** argv)
 {
+    //raylib库用于获取手柄信号
     InitWindow(720, 720, "raylib [background]");
     SetTargetFPS(60);
     //相机
@@ -86,13 +87,15 @@ int main(int argc, char** argv)
     motion = concatenate_two_motions(motion, motion6, 39622, 30);
     active_motion = motion_sub_sequence(motion, 0, 0 + 1.5 * N);
     search_motion = motion_sub_sequence(motion, 0, 0 + 1.5 * N);
-    //模拟器
+    //仿真器
     Simulator simulator;
+    //仿真器使用某一帧动作作为模型的初始位置
     bind_simulator(simulator, motion, 12600, 0.05);
     //点光源
     Point_Light light(vec3(0.f, 1.f, 1.5f), vec3(0.f, 0.f, -1.f), vec3(20.f));
     //对角色数据的拷贝
     MooMesh mesh1 = make_character_rest_mesh(character);
+    //按骨骼数量创建胶囊体mesh
     array1d<MooMesh> meshes(simulator.bone_masses.size);
     for(int i = 0; i < meshes.size; i++)
     {
@@ -110,8 +113,11 @@ int main(int argc, char** argv)
     material1.BRDFLut = img_to_tex("../resources/BRDFLut.png");
     material1.EavgLut = img_to_tex("../resources/EavgLut.png");
     //model存储mesh的拷贝，但由于mesh本身存储的是地址，实际上仍为mesh地址上的数据
+    //灯光cube模型
     MooModel model0 = get_light_model(light);
+    //人物模型
     MooModel model1 = mesh_material_to_model(mesh1, material1);
+    //按骨骼数量创建胶囊体模型
     array1d<MooModel> models(simulator.bone_masses.size);
     for(int i = 0; i < models.size; i++)
     {
@@ -137,24 +143,26 @@ int main(int argc, char** argv)
     UI_load_char(ui, '9', "../resources/UI/9.png");
     //渲染器
     MooRenderer renderer;
-
+    //将模型信息导入渲染器
     renderer.models.push_back(&model0);
     renderer.models.push_back(&model1);
     for(int i = 0; i < models.size; i++)
     {
         renderer.models.push_back(&models(i));
     }
+    //将点光源信息导入渲染器
     renderer.point_lights.push_back(&light);
 
     int key = 0;
     int frame_num = 0;
     int t = 0;
+    //每秒仿真次数
     int simulate_time = 1;
-
+    //步进时间
     float dt = 0.0166667f;
 
     int times = 900;
-
+    //目标角色关节全局位置和姿态
     array1d<vec3> target_character_bone_anim_positions(motion.nbones());
     array1d<quat> target_character_bone_anim_rotations(motion.nbones());
 
@@ -166,7 +174,7 @@ int main(int argc, char** argv)
 
     array1d<vec3> next_character_bone_anim_positions(motion.nbones());
     array1d<quat> next_character_bone_anim_rotations(motion.nbones());
-    
+    //motion matching数据库信息
     array1d<int> frames(motion.nframes() - N);
     array1d<int> contacts(motion.nframes() - N);
     // frame 0.0 * N 0.2 * N 0.4 * N 0.6 * N 0.8 * N 1.0 * N
@@ -174,6 +182,7 @@ int main(int argc, char** argv)
     array2d<vec3> avels(motion.nframes() - N, 6);
     // ltoe rtoe lvel rvel
     array2d<vec3> features(motion.nframes() - N, 4);
+    //角色速度，角速度，左右脚相对位置，速度，脚与地面接触情况
     vec3 vel;
     vec3 avel;
     vec3 ltoe;
@@ -182,7 +191,7 @@ int main(int argc, char** argv)
     vec3 rvel;
     float contact = 0;
     vec3 contact_point;
-
+    //各分量的权重
     int weight_vel = 8;
     int weight_avel = 3;
     int weight_toe = 5;
@@ -197,6 +206,7 @@ int main(int argc, char** argv)
 
     // std::cout << db.frames.size << ',' << db.velocities.size << ',' << db.features.rows << ',' << db.features.cols << std::endl;
 
+    //openCV库用于显示渲染出的图像
     cv::imshow("MOOLAB", fbo_to_img(&camera.fbo[0]));
     cv::createTrackbar("vel", "MOOLAB", &weight_vel, 50);
     cv::createTrackbar("avel", "MOOLAB", &weight_avel, 50);
@@ -207,20 +217,22 @@ int main(int argc, char** argv)
 
     while (key != 27 && t < motion.nframes() - N)
     {
+        //获取手柄摇杆输入信号
         vec3 gamepadstick_left = gamepad_get_stick(GAMEPAD_STICK_LEFT);
         vec3 gamepadstick_right = gamepad_get_stick(GAMEPAD_STICK_RIGHT);
-
+        //计算手柄摇杆信号对应全局速度，角速度
         vec3 global_gamepad_vel = 5.f * (quat(rad_to_deg(camera_controller.ang.x), vec3(0.f, 1.f, 0.f)) * (-gamepadstick_left));
         vec3 global_gamepad_avel = cross(normalize(curr_character_bone_anim_rotations(Bone_Entity) * vec3(0.f, 0.f, 1.f)), normalize(global_gamepad_vel)) / (N * 0.0166667f);
-
+        //计算手柄摇杆信号对应局部速度，角速度
         vec3 local_gamepad_vel = (inv_quat(curr_character_bone_anim_rotations(Bone_Entity)) * global_gamepad_vel);
         vec3 local_gamepad_avel = global_gamepad_avel;
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
-
+        //相机FBO设为默认色
         camera.fbo[0].set(vec3(100.f, 100.f, 200.f), 100.f);
 
+        //motion matching对应模块，暂未启用
         // if(frame_num == N)
         // {
             // vel = (2.5f + 2.5f * sin(deg_to_rad(0.1f * t))) * vec3(0.f, 0.f, 1.f);
@@ -275,6 +287,7 @@ int main(int argc, char** argv)
         last_character_bone_anim_positions = curr_character_bone_anim_positions;
         last_character_bone_anim_rotations = curr_character_bone_anim_rotations;
 
+        //仿真组块，一定时间之前直接使用动作数据，之后使用仿真结果
         if(t <= -1)
         {
             batch_forward_kinematics_full(
@@ -283,6 +296,7 @@ int main(int argc, char** argv)
             curr_character_bone_anim_positions, 
             curr_character_bone_anim_rotations);
 
+            //更新仿真器各关节的位置，姿态，速度，角速度信息等
             if(t == 1000)
             {
                 // bind_simulator(simulator, active_motion, frame_num, 0.05);
@@ -297,27 +311,35 @@ int main(int argc, char** argv)
         }
         else
         {
+            //按每帧仿真次数进行仿真
             for(int i = 0; i < simulate_time; i++)
             {
                 // simulator.bone_forces(0) = simulator.bone_forces(0) + vec3(100.f, 0.f, 0.f);
+                //仿真器引入重力，阻尼，碰撞检测
                 simulator.simulate_gravity(9.8);
                 simulator.simulate_damp(0.25);
                 simulator.simulate_contact(0, 1, 0, 0.05, 1e-2);
+                //特定时间内，引入力矩控制
                 if(t < 900)
                 {
+                    //全局力矩控制，不符合物理，但效果不错
                     simulator.simulate_global_control(active_motion.bone_local_rotations(0.5f * frame_num));
+                    //局部力矩控制，符合物理，但需要仔细调整参数才可能有好的效果
+                    // simulator.simulate_local_control(active_motion.bone_local_rotations(0.5f * frame_num));
                 }
                 // simulator.simulate_global_control(active_motion.bone_local_rotations(0.5f * frame_num));
                 // simulator.simulate_local_control(active_motion.bone_local_rotations(0.5f * frame_num));
+                //仿真器运行仿真
                 simulator.simulate(dt / simulate_time);
             }
-
+            //将仿真模型的数据分配到骨骼上
             deform_character_anim_bones(
             simulator, 
             curr_character_bone_anim_positions, 
             curr_character_bone_anim_rotations);
         }
 
+        //计算速度，角速度等信息，motion matching使用
         vel = inv_quat(curr_character_bone_anim_rotations(Bone_Entity)) 
                     * vec_to_vel(last_character_bone_anim_positions(Bone_Entity), curr_character_bone_anim_positions(Bone_Entity));
 
@@ -330,6 +352,7 @@ int main(int argc, char** argv)
         rtoe = inv_quat(curr_character_bone_anim_rotations(Bone_Entity)) 
                     * (curr_character_bone_anim_positions(Bone_RightToe) - curr_character_bone_anim_positions(Bone_Entity));
 
+        //计算左右脚与地面接触情况
         if(t > 0)
         {
             lvel = vec_to_vel(features(t - 1, 0), ltoe);
@@ -358,6 +381,7 @@ int main(int argc, char** argv)
             }
         }
 
+        //脚锁，motion matching防止滑步，但实测效果一般
         // if(contact == 0)
         // {
         //     IK_two_bones(
@@ -391,12 +415,14 @@ int main(int argc, char** argv)
         //     curr_character_bone_anim_positions, 
         //     curr_character_bone_anim_rotations);
 
+        //将骨骼信息导入到模型，更新各顶点信息
         deform_character_anim_mesh(
             character, 
             curr_character_bone_anim_positions, 
             curr_character_bone_anim_rotations, 
             mesh1);
 
+        //直接使用仿真器信息更新各胶囊体位姿
         // float delta = 0;
         for(int i = 2; i < 24; i++)
         {
@@ -406,6 +432,7 @@ int main(int argc, char** argv)
         }
         // std::cout << t << ',' << delta << std::endl;
 
+        //更新相机信息
         // camera_controller.dir_gamepad_control(vec3(0.05f, 0.f, 0.f), 0.1f);
         camera_controller.dir_gamepad_control(gamepadstick_right, 0.1f);
         camera.update_orientation(vec3(0.f, 1.f, 0.f));
@@ -418,6 +445,7 @@ int main(int argc, char** argv)
         //     curr_character_bone_anim_positions(Bone_Hips) + camera.orientation * vec3(0.f, 0.f, 2.5f));
         camera_controller.pos_gamepad_control(vec3(curr_character_bone_anim_positions(Bone_Hips).x, 0.35f, curr_character_bone_anim_positions(Bone_Hips).z), camera.orientation, 2.5);
 
+        //更新灯光信息
         light.light_position = curr_character_bone_anim_positions(Bone_Hips) + camera.orientation * vec3(0.f, 0.f, 5.f);
         light.light_radiance = 20.f + 10.f * sin(deg_to_rad(0.5f * t));
 
@@ -429,6 +457,8 @@ int main(int argc, char** argv)
         // {
         //     draw(renderer.models[i], camera, &camera.fbo[0], &par, false);
         // }
+
+        //绘制，延迟渲染效果不佳，于是直接采用一次渲染
         draw(renderer.models[0], camera, &camera.fbo[0], &par, true);
         // draw(renderer.models[1], camera, &camera.fbo[0], &par, true);
         for(int i = 2; i < 24; i++)
@@ -436,34 +466,38 @@ int main(int argc, char** argv)
             draw(renderer.models[i], camera, &camera.fbo[0], &par, true);
         }
 
-        if(contact == 0)
+        //在渲染图绘制接触地面脚的关键点
+        // if(contact == 0)
+        // {
+        //     draw_point(curr_character_bone_anim_positions(Bone_LeftUpLeg), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
+        //     draw_point(curr_character_bone_anim_positions(Bone_LeftLeg), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
+        //     draw_point(curr_character_bone_anim_positions(Bone_LeftFoot), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
+        //     draw_point(curr_character_bone_anim_positions(Bone_LeftToe), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
+        //     draw_point(contact_point, camera, &camera.fbo[0], vec3(255.f, 0.f, 0.f));
+        // }
+        // else
+        // {
+        //     draw_point(curr_character_bone_anim_positions(Bone_RightUpLeg), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
+        //     draw_point(curr_character_bone_anim_positions(Bone_RightLeg), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
+        //     draw_point(curr_character_bone_anim_positions(Bone_RightFoot), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
+        //     draw_point(curr_character_bone_anim_positions(Bone_RightToe), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
+        //     draw_point(contact_point, camera, &camera.fbo[0], vec3(0.f, 0.f, 255.f));
+        // }
+        //绘制人物速度预测曲线
+        // draw_curve(curr_character_bone_anim_positions(Bone_Entity), 
+        //            curr_character_bone_anim_rotations(Bone_Entity) * vel, 
+        //            global_gamepad_vel, 
+        //            camera, 
+        //            &camera.fbo[0], 
+        //            vec3(0.f, 255.f, 0.f), 
+        //            N);
+        //在渲染图绘制骨骼关键点
+        for(int i = 1; i < motion.nbones(); i++)
         {
-            draw_point(curr_character_bone_anim_positions(Bone_LeftUpLeg), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
-            draw_point(curr_character_bone_anim_positions(Bone_LeftLeg), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
-            draw_point(curr_character_bone_anim_positions(Bone_LeftFoot), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
-            draw_point(curr_character_bone_anim_positions(Bone_LeftToe), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
-            draw_point(contact_point, camera, &camera.fbo[0], vec3(255.f, 0.f, 0.f));
-        }
-        else
-        {
-            draw_point(curr_character_bone_anim_positions(Bone_RightUpLeg), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
-            draw_point(curr_character_bone_anim_positions(Bone_RightLeg), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
-            draw_point(curr_character_bone_anim_positions(Bone_RightFoot), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
-            draw_point(curr_character_bone_anim_positions(Bone_RightToe), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
-            draw_point(contact_point, camera, &camera.fbo[0], vec3(0.f, 0.f, 255.f));
-        }
-
-        draw_curve(curr_character_bone_anim_positions(Bone_Entity), 
-                   curr_character_bone_anim_rotations(Bone_Entity) * vel, 
-                   global_gamepad_vel, 
-                   camera, 
-                   &camera.fbo[0], 
-                   vec3(0.f, 255.f, 0.f), 
-                   N);
-
-        for(int i = 0; i < motion.nbones(); i++)
-        {
-            draw_point(curr_character_bone_anim_positions(i), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
+            if(simulator.bone_shapes(i - 1).ifcontact == true)
+            {
+                draw_point(curr_character_bone_anim_positions(i), camera, &camera.fbo[0], vec3(0.f, 255.f, 0.f));
+            }
         }
 
         cv::imshow("MOOLAB", fbo_to_img(&camera.fbo[0]));
