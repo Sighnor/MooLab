@@ -475,8 +475,8 @@ void Simulator::simulate_local_control(slice1d<quat> target_local_rotations)
             vec3 force = 0.5f * (bone_shapes(4 - 1).pos + bone_shapes(8 - 1).pos) - center / mass;
             root_force = 100.f * vec3(force.x, 0.f, force.z) - 10.f * bone_vels(1 - 1);
 
-            bone_forces(0) = bone_forces(0) + root_force;
-            // bone_torgues(0) = bone_torgues(0) + root_torgue;
+            // bone_forces(0) = bone_forces(0) + root_force;
+            bone_torgues(0) = bone_torgues(0) + root_torgue;
         }
         else
         {
@@ -712,12 +712,6 @@ void bind_simulator(Simulator &simulator, const BVH_Motion &motion, int frame_id
     simulator.bone_masses(21 - 1) = 1.2;
     simulator.bone_masses(22 - 1) = 0.8;
 
-    for(int i = 0; i < simulator.bone_masses.size; i++)
-    {
-        simulator.bone_inertias(i) = float(simulator.bone_masses(i)) * eye3();
-        // simulator.bone_inertias(i) = eye3();
-    }
-
     array1d<vec3> bone_anim_positions(motion.nbones());
     array1d<quat> bone_anim_rotations(motion.nbones());
 
@@ -786,6 +780,28 @@ void bind_simulator(Simulator &simulator, const BVH_Motion &motion, int frame_id
     simulator.bone_shapes(22 - 1).rot = bone_anim_rotations(22) * simulator.bone_quat_compensates(22 - 1);
     simulator.bone_shapes(22 - 1).radius = radius;
     simulator.bone_shapes(22 - 1).length = 2 * radius;
+
+    for(int i = 0; i < simulator.bone_masses.size; i++)
+    {
+        // simulator.bone_inertias(i) = float(simulator.bone_masses(i)) * eye3();
+        if(i == 5 - 1 || i == 9 - 1)
+        {
+            simulator.bone_inertias(i) = 0.5f * eye3();
+        }
+        else if(i == 4 - 1 || i == 8 - 1)
+        {
+            simulator.bone_inertias(i) = 1.f * eye3();
+        }
+        else
+        {
+            simulator.bone_inertias(i) = mat3(
+                                        50 * simulator.bone_masses(i) * (simulator.bone_shapes(i).length * simulator.bone_shapes(i).length / 12 + simulator.bone_shapes(i).radius * simulator.bone_shapes(i).radius / 4), 
+                                        50 * simulator.bone_masses(i) * (simulator.bone_shapes(i).radius * simulator.bone_shapes(i).radius / 2), 
+                                        50 * simulator.bone_masses(i) * (simulator.bone_shapes(i).length * simulator.bone_shapes(i).length / 12 + simulator.bone_shapes(i).radius * simulator.bone_shapes(i).radius / 4));
+        }
+        // simulator.bone_masses(i) = 1.f;
+        // simulator.bone_inertias(i) = 2.f * eye3();
+    }
 
     for(int i = 0; i < simulator.bone_masses.size; i++)
     {
