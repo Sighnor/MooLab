@@ -4,7 +4,7 @@
 #include "array.hpp"
 #include "global.hpp"
 
-//--------------------------------------
+// Taken from https://github.com/orangeduck/Motion-Matching
 struct nnet
 {
     array1d<float> input_mean;
