@@ -102,7 +102,7 @@ void MooShader::resize(int _triangle_count)
     }
     else if (_triangle_count > 0 && triangle_count > 0 && _triangle_count != triangle_count)
     {
-        ver = (vertex_payload *)(triangle_count * sizeof(vertex_payload));
+        ver = (vertex_payload *)malloc(triangle_count * sizeof(vertex_payload));
         assert(ver != NULL);           
     }
 }
