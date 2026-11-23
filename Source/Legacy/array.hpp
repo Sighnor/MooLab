@@ -1,0 +1,216 @@
+#ifndef MOOLAB_ARRAY
+#define MOOLAB_ARRAY
+
+#include <assert.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+#include "Core.h"
+
+// Taken from https://github.com/orangeduck/Motion-Matching
+template<typename T>
+struct slice1d
+{
+    int size;
+    T* MOO_RESTRICT data;
+    
+    slice1d(int _size, T* _data) : size(_size), data(_data) {}
+    
+    void zero() { memset((char*)data, 0, sizeof(T) * size); }
+    void set(const T& x) { for(int i = 0; i < size; i++) { data[i] = x; } }
+    
+    inline T& operator()(int i) const { assert(i >= 0 && i < size); return data[i]; }
+};
+
+template<typename T>
+struct slice2d
+{
+    int rows, cols;
+    T* MOO_RESTRICT data;
+    
+    slice2d(int _rows, int _cols, T* _data) : rows(_rows), cols(_cols), data(_data) {}
+
+    void zero() { memset((char*)data, 0, sizeof(T) * rows * cols); }
+    void set(const T& x) { for(int i = 0; i < rows * cols; i++) { data[i] = x; } }
+    
+    inline slice1d<T> operator()(int i) const { assert(i >= 0 && i < rows); return slice1d<T>(cols, &data[i * cols]); }
+    inline T& operator()(int i, int j) const { assert(i >= 0 && i < rows && j >= 0 && j < cols); return data[i * cols + j]; }
+};
+
+template<typename T>
+struct array1d
+{
+    int size;
+    T* data;
+    
+    array1d() : size(0), data(NULL) {}
+    array1d(int _size) : array1d() { resize(_size);  }
+    array1d(const slice1d<T>& rhs) : array1d() { resize(rhs.size); memcpy(data, rhs.data, rhs.size * sizeof(T)); }
+    array1d(const array1d<T>& rhs) : array1d() { resize(rhs.size); memcpy(data, rhs.data, rhs.size * sizeof(T)); }
+    ~array1d() { resize(0); }
+    
+    array1d& operator=(const slice1d<T>& rhs) { resize(rhs.size); memcpy(data, rhs.data, rhs.size * sizeof(T)); return *this; };
+    array1d& operator=(const array1d<T>& rhs) { resize(rhs.size); memcpy(data, rhs.data, rhs.size * sizeof(T)); return *this; };
+
+    inline T& operator()(int i) const { assert(i >= 0 && i < size); return data[i]; }
+    operator slice1d<T>() const { return slice1d<T>(size, data); }
+    
+    void zero() { memset(data, 0, sizeof(T) * size); }
+    void set(const T& x) { for(int i = 0; i < size; i++) { data[i] = x; } }
+    slice1d<T> slice() { return slice1d<T>(size, data); }
+    
+    void resize(int _size)
+    {
+        if(_size == 0 && size != 0)
+        {
+            free(data);
+            data = NULL;
+            size = 0;
+        }
+        else if(_size > 0 && size == 0)
+        {
+            data = (T*)malloc(_size * sizeof(T));
+            size = _size;
+            MOO_CHECK_ALWAYS(data != NULL, "out of memory (%d elements)", _size);
+        }
+        else if(_size > 0 && size > 0 && _size != size)
+        {
+            data = (T*)realloc(data, _size * sizeof(T));
+            size = _size;
+            MOO_CHECK_ALWAYS(data != NULL, "out of memory (%d elements)", _size);
+        }
+    }
+};
+
+template<typename T>
+void array1d_write(const array1d<T>& arr, FILE* f)
+{
+    MOO_CHECK_ALWAYS(fwrite(&arr.size, sizeof(int), 1, f) == 1, "binary write failed (array1d header)");
+    size_t num = fwrite(arr.data, sizeof(T), arr.size, f);
+    MOO_CHECK_ALWAYS((int)num == arr.size, "binary write failed (array1d: %d of %d elements)", (int)num, arr.size);
+}
+
+// 读二进制资产：长度头与数据段均校验，截断/损坏的文件在所有配置下给出明确报错
+template<typename T>
+void array1d_read(array1d<T>& arr, FILE* f)
+{
+    int size = -1;
+    MOO_CHECK_ALWAYS(fread(&size, sizeof(int), 1, f) == 1 && size >= 0, "truncated or corrupt binary (array1d header, size=%d)", size);
+    arr.resize(size);
+    size_t num = fread(arr.data, sizeof(T), size, f);
+    MOO_CHECK_ALWAYS((int)num == size, "truncated or corrupt binary (array1d: read %d of %d elements)", (int)num, size);
+}
+
+template<typename T>
+struct array2d
+{
+    int rows, cols;
+    T* data;
+    
+    array2d() : rows(0), cols(0), data(NULL) {}
+    array2d(int _rows, int _cols) : array2d() { resize(_rows, _cols);  }
+    ~array2d() { resize(0, 0); }
+
+    array2d& operator=(const array2d<T>& rhs) { resize(rhs.rows, rhs.cols); memcpy(data, rhs.data, rhs.rows * rhs.cols * sizeof(T)); return *this; };
+    array2d& operator=(const slice2d<T>& rhs) { resize(rhs.rows, rhs.cols); memcpy(data, rhs.data, rhs.rows * rhs.cols * sizeof(T)); return *this; };
+
+    inline slice1d<T> operator()(int i) const { assert(i >= 0 && i < rows); return slice1d<T>(cols, &data[i * cols]); }
+    inline T& operator()(int i, int j) const { assert(i >= 0 && i < rows && j >= 0 && j < cols); return data[i * cols + j]; }
+    operator slice2d<T>() const { return slice2d<T>(rows, cols, data); }
+
+    void zero() { memset(data, 0, sizeof(T) * rows * cols); }
+    void set(const T& x) { for(int i = 0; i < rows * cols; i++) { data[i] = x; } }
+    slice2d<T> slice() { return slice2d<T>(rows, cols, data); }
+
+    void resize(int _rows, int _cols)
+    {
+        int _size = _rows * _cols;
+        int size = rows * cols;
+        
+        if(_size == 0 && size != 0)
+        {
+            free(data);
+            data = NULL;
+            rows = 0;
+            cols = 0;
+        }
+        else if(_size > 0 && size == 0)
+        {
+            data = (T*)malloc(_size * sizeof(T));
+            rows = _rows;
+            cols = _cols;
+            MOO_CHECK_ALWAYS(data != NULL, "out of memory (%d x %d elements)", _rows, _cols);
+        }
+        else if(_size > 0 && size > 0 && _size != size)
+        {
+            data = (T*)realloc(data, _size * sizeof(T));
+            rows = _rows;
+            cols = _cols;
+            MOO_CHECK_ALWAYS(data != NULL, "out of memory (%d x %d elements)", _rows, _cols);
+        }
+    }
+};
+
+template<typename T>
+void array2d_write(const array2d<T>& arr, FILE* f)
+{
+    MOO_CHECK_ALWAYS(fwrite(&arr.rows, sizeof(int), 1, f) == 1 && fwrite(&arr.cols, sizeof(int), 1, f) == 1, "binary write failed (array2d header)");
+    size_t num = fwrite(arr.data, sizeof(T), arr.rows * arr.cols, f);
+    MOO_CHECK_ALWAYS((int)num == arr.rows * arr.cols, "binary write failed (array2d: %d of %d elements)", (int)num, arr.rows * arr.cols);
+}
+
+template<typename T>
+void array2d_read(array2d<T>& arr, FILE* f)
+{
+    int rows = -1, cols = -1;
+    MOO_CHECK_ALWAYS(fread(&rows, sizeof(int), 1, f) == 1 && fread(&cols, sizeof(int), 1, f) == 1, "truncated or corrupt binary (array2d header)");
+    MOO_CHECK_ALWAYS(rows >= 0 && cols >= 0 && (long long)rows * cols <= INT_MAX, "truncated or corrupt binary (array2d header, %d x %d)", rows, cols);
+    arr.resize(rows, cols);
+    size_t num = fread(arr.data, sizeof(T), rows * cols, f);
+    MOO_CHECK_ALWAYS((int)num == rows * cols, "truncated or corrupt binary (array2d: read %d of %d elements)", (int)num, rows * cols);
+}
+
+template<typename T>
+void array2d_set_by_rows(array2d<T>& arr, const array1d<T>& res, int row_id)
+{
+    assert(arr.cols == res.size);
+    for(int i = 0; i < res.size; i++)
+    {
+        arr(row_id, i) = res(i);
+    }
+}
+
+template<typename T>
+void array2d_set_by_cols(array2d<T>& arr, const array1d<T>& res, int col_id)
+{
+    assert(arr.rows == res.size);
+    for(int i = 0; i < res.size; i++)
+    {
+        arr(i, col_id) = res(i);
+    }
+}
+
+template<typename T>
+array2d<T> array2d_sub_sequence(const array2d<T>& arr, int begin, int end)
+{
+    array2d<T> res;
+    res.resize(end - begin, arr.cols);
+    memcpy(res.data, &arr.data[begin * arr.cols], res.rows * res.cols * sizeof(T));
+
+    return res;
+}
+
+template<typename T>
+array2d<T> array2d_concatenate(const array2d<T>& arr1, const array2d<T>& arr2)
+{
+    array2d<T> res;
+    res.resize(arr1.rows + arr2.rows, arr1.cols);
+    memcpy(res.data, arr1.data, arr1.rows * arr1.cols * sizeof(T));
+    memcpy(&res.data[arr1.rows * arr1.cols], arr2.data, arr2.rows * arr2.cols * sizeof(T));
+
+    return res;
+}
+
+#endif

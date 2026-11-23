@@ -1,0 +1,29 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: zh-CN
+branch: Version_2.0
+nodes_managed: true
+# 2.0 手动修正：仅日期可信，时刻为占位（原值为 2026-11-03T11:17:21Z，基于 1.x 分支）
+exported_at: "2026-11-24T00:00:00Z"
+modules:
+    "":
+        dir_name: MooLab 角色运动渲染与仿真沙盒
+        title: MooLab 角色运动渲染与仿真沙盒
+        scope:
+            - .
+            - .gitattributes
+            - .gitignore
+            - .qoder
+            - CHANGELOG.md
+            - CMakeLists.txt
+            - CMakePresets.json
+            - README.md
+            - Shaders
+            - Source
+            - Tools
+            - resources
+            - vcpkg.json
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []

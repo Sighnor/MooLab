@@ -1,0 +1,75 @@
+# ── 构建输出 ────────────────────────────────────────────────
+# 智能体配置与 repowiki 已迁移到仓库根目录 .qoder/（需入库），
+# 因此整个 build/ 可以无条件忽略。
+build/
+out/
+vcpkg_installed/
+
+# ── CMake 生成物 ────────────────────────────────────────────
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CMakeUserPresets.json
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+install_manifest.txt
+
+# ── IDE / 编辑器 ────────────────────────────────────────────
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.sln
+*.slnx
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.vcxproj.ctest
+*.log
+
+# ── 编译中间产物 ────────────────────────────────────────────
+*.obj
+*.o
+*.exe
+*.dll
+*.lib
+*.exp
+*.pdb
+*.ilk
+*.idb
+*.ipdb
+*.iobj
+*.tlog
+*.lastbuildstate
+
+# ── Python（Tools/Verify 脚本） ─────────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# ── 运行时/调试输出 ─────────────────────────────────────────
+*.err
+*.dmp
+*.stackdump
+
+# ── 实验与调试数据（代码未引用，不入库） ─────────────────────
+# 运行时必需资源仍保留：character.bin / database.bin / long_motion.bin /
+# skybox.png / foot_contacts.bin / texture.png / BRDFLut.png / EavgLut.png
+resources/my_database.bin
+resources/database_old.bin
+resources/R.txt
+resources/x.txt
+resources/motiondata.txt
+resources/output.txt
+resources/test.txt
+resources/velocities.bin
+resources/robot_old.bin
+
+# ── 系统文件 ────────────────────────────────────────────────
+Thumbs.db
+desktop.ini
+.DS_Store

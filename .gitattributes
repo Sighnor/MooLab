@@ -1,0 +1,29 @@
+# 行尾策略：文本随平台（Windows 工作区为 CRLF，仓库内存 LF），二进制永不转换。
+# 本仓库为 Windows-only（MSVC + vcpkg + XInput），不做跨平台 LF 强制，避免
+# 改写工作区与 Tools/Verify/compile_gl_probe.cmd 在 cmd.exe 下的行为差异。
+* text=auto
+
+# 二进制资源：禁止任何换行/编码转换与文本 diff
+*.bin binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.zip binary
+*.pyc binary
+*.lib binary
+*.dll binary
+*.exe binary
+
+# 文档与配置显式声明为文本（避免自动探测把无 NUL 的怪异文件判成二进制）
+*.md text
+*.txt text
+*.m text
+*.json text
+*.yaml text
+*.yml text
+CMakeLists.txt text
+CMakePresets.json text
+vcpkg.json text
+.gitignore text
+.gitattributes text

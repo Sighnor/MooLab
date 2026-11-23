@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "moolab",
+  "version-string": "2.0",
+  "description": "MooLab rasterizer (CPU reference + OpenGL GPU path) / character animation & simulation sandbox",
+  "builtin-baseline": "b3df23b9d6fd69a3ce8fe8ccf943079bcc1499ad",
+  "dependencies": [
+    {
+      "name": "opencv4",
+      "default-features": false,
+      "features": [
+        "jpeg",
+        "png",
+        "thread"
+      ]
+    },
+    "glfw3",
+    {
+      "name": "glad",
+      "features": [
+        "gl-api-46"
+      ]
+    },
+    {
+      "name": "imgui",
+      "features": [
+        "glfw-binding",
+        "opengl3-binding",
+        "docking-experimental"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+schema_version: 1
+module_path: ""
+title: MooLab 角色运动渲染与仿真沙盒
+scope:
+    - .
+    - .gitattributes
+    - .gitignore
+    - .qoder
+    - CHANGELOG.md
+    - CMakeLists.txt
+    - CMakePresets.json
+    - README.md
+    - Shaders
+    - Source
+    - Tools
+    - resources
+    - vcpkg.json
+source_files: []
+depends_on: []
+related_to: []
